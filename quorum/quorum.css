@@ -219,6 +219,19 @@ input, select { font: inherit; }
   gap: 10px;
 }
 
+.q-profile-details {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255,255,255,.025);
+}
+.q-profile-details summary { color: var(--text); font-size: 12px; font-weight: 750; cursor: pointer; }
+.q-profile-details > p { margin-top: 8px; color: var(--faint); font-size: 11px; line-height: 1.5; }
+.q-profile-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.q-profile-form-grid label { display: grid; gap: 6px; color: var(--faint); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.q-profile-form-grid .q-input { min-width: 0; padding: 10px 11px; font-size: 12px; letter-spacing: normal; text-transform: none; }
+
 .q-join-foot {
   margin-top: 22px;
   padding-top: 16px;
@@ -362,9 +375,8 @@ input, select { font: inherit; }
 }
 
 /* ==========================================================
-   GOOGLE-STYLE DYNAMIC BORDER GRADIENT FOR PARTICIPANT TILES
-   White to gray to dark gray continuous dynamic rotation
-   Active speaker luminous aura & audio wave bars
+   PARTICIPANT TILES
+   Restrained animated edge, contained to each tile
    ========================================================== */
 
 @property --border-angle {
@@ -385,14 +397,15 @@ input, select { font: inherit; }
   transition: left 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, transform 0.2s ease;
   z-index: 2;
   isolation: isolate;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Google Meet / Gemini rotating border gradient: White -> Gray -> Dark Gray -> White */
 .q-box::before {
   content: '';
   position: absolute;
-  inset: -100%;
+  inset: 0;
+  border-radius: inherit;
   background: conic-gradient(
     from var(--border-angle, 0deg),
     #ffffff 0%,
@@ -410,14 +423,8 @@ input, select { font: inherit; }
 }
 
 @keyframes qRotateBorder {
-  from {
-    --border-angle: 0deg;
-    transform: rotate(0deg);
-  }
-  to {
-    --border-angle: 360deg;
-    transform: rotate(360deg);
-  }
+  from { --border-angle: 0deg; }
+  to { --border-angle: 360deg; }
 }
 
 .q-box-content {
@@ -429,6 +436,27 @@ input, select { font: inherit; }
   overflow: hidden;
   z-index: 1;
 }
+.q-profile-trigger {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.92);
+  border-radius: 50%;
+  background: #fff;
+  color: #080a0c;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 2px 12px rgba(0,0,0,.45);
+  cursor: pointer;
+}
+.q-profile-trigger:hover { background: #dff8f0; transform: scale(1.06); }
+.q-profile-trigger[hidden] { display: none; }
 
 /* Speaking State: active speaker glows and speeds up */
 .q-box.is-speaking::before,
@@ -497,7 +525,7 @@ body.is-host .q-box:active { cursor: grabbing; }
   display: block;
   background: #05070a;
 }
-.q-box.self video { transform: scaleX(-1); }
+.q-box.mirror-camera video { transform: scaleX(-1); }
 .q-box.no-cam video { display: none; }
 
 .q-avatar {
@@ -681,6 +709,30 @@ body.is-host .q-group-head { cursor: grab; }
   box-shadow: 0 28px 100px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.06);
 }
 .q-tools-dialog::backdrop { background: rgba(0,0,0,.72); backdrop-filter: blur(8px); }
+.q-profile-dialog {
+  width: min(560px, calc(100vw - 28px));
+  max-width: none;
+  max-height: min(86dvh, 700px);
+  padding: 0;
+  overflow: auto;
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: 18px;
+  background: #090b0e;
+  box-shadow: 0 28px 100px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.q-profile-dialog::backdrop { background: rgba(0,0,0,.72); backdrop-filter: blur(8px); }
+.q-profile-shell { padding: clamp(18px, 4vw, 26px); }
+.q-profile-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:20px; }
+.q-profile-head h2 { margin-top:7px; font-size:clamp(20px, 3vw, 26px); letter-spacing:-.035em; }
+.q-profile-head p { margin-top:6px; color:var(--muted); font-size:13px; }
+.q-profile-view-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.q-profile-view-grid > div { min-width:0; display:grid; align-content:start; gap:7px; padding:13px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.025); }
+.q-profile-view-grid > .wide { grid-column:1 / -1; }
+.q-profile-view-grid span { color:var(--faint); font-size:10px; font-weight:850; letter-spacing:.1em; text-transform:uppercase; }
+.q-profile-view-grid strong { overflow-wrap:anywhere; color:var(--text); font-size:13px; font-weight:650; line-height:1.5; }
+.q-flip-camera { min-width:78px; }
+.q-flip-camera[aria-busy="true"] { opacity:.65; cursor:wait; }
 .q-tools-shell { padding: clamp(18px, 4vw, 30px); }
 .q-tools-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:20px; }
 .q-tools-head h2 { margin-top:7px; font-size:clamp(20px, 3vw, 26px); letter-spacing:-.035em; }

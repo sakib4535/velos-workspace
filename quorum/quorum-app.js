@@ -78,6 +78,7 @@ const S = {
   heartbeat: null,
   reconnectAttempts: 0,
   roomId: '',
+  profile: { position: '', rank: '', skillsets: '', department: '' },
   selfId: '',
   room: null,
   prev: null, /* previous snapshot, for diff toasts */
@@ -86,6 +87,8 @@ const S = {
   pendingStream: null,
   mediaReady: null,
   cameraTrack: null,
+  cameraFacingMode: 'user',
+  switchingCamera: false,
   micTrack: null,
   micOn: true,
   camOn: true,
@@ -154,6 +157,10 @@ const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
 const E = {};
 [
   'qJoin', 'qMeet', 'qName', 'qRoom', 'qOpenBtn', 'qJoinBtn', 'qJoinStatus',
+  'qProfilePosition', 'qProfileRank', 'qProfileSkills', 'qProfileDepartment',
+  'qProfileDialog', 'qProfileCloseBtn', 'qProfileTitle', 'qProfileRole',
+  'qProfileViewPosition', 'qProfileViewRank', 'qProfileViewSkills',
+  'qProfileViewDepartment', 'qProfileViewStage', 'qProfileViewGroup',
   'qRoomChip', 'qInviteBtn', 'qRoomLabel', 'qConnDot', 'qPeopleCount', 'qHostLabel',
   'qLeaveBtn', 'qLeaveBtn2', 'qStage', 'qStageEmpty', 'qStageMeta',
   'qHostHint', 'qNewGroupBtn', 'qFacil', 'qFacilSub', 'qGroupSwatch',
@@ -162,7 +169,7 @@ const E = {};
   'qMotionActions', 'qVoteSeconds', 'qVoteOpenBtn', 'qResetHandsBtn',
   'qVoteCard', 'qVoteMine', 'qGestureBtn', 'qGestureDot', 'qGestureLive',
   'qGestureChip', 'qGestureAction', 'qTally', 'qHands', 'qMicBtn', 'qCamBtn',
-  'qHandBtn', 'qCamVideo', 'qHandCursor', 'qToasts',
+  'qHandBtn', 'qCamVideo', 'qFlipCamBtn', 'qHandCursor', 'qToasts',
   'qPresentBtn', 'qToolsBtn', 'qToolsDialog', 'qToolsCloseBtn', 'qToolsShareBtn',
   'qPresentDockBtn', 'qSharedStage', 'qPresentationStatus',
   'qSlidePrevBtn', 'qSlideCounter', 'qSlideNextBtn', 'qShareScreenBtn',
@@ -299,7 +306,7 @@ function initJoinScreen() {
     if (!name) return;
     const code = mintRoomCode();
     E.qRoom.value = code;
-    joinRoom(code, name, true);
+    joinRoom(code, name, true, readProfile());
   });
 
   E.qJoinBtn.addEventListener('click', () => {
@@ -311,7 +318,7 @@ function initJoinScreen() {
       E.qRoom.focus();
       return;
     }
-    joinRoom(code, name, false);
+    joinRoom(code, name, false, readProfile());
   });
 
   E.qRoom.addEventListener('keydown', (ev) => {
@@ -331,6 +338,15 @@ function readName() {
   }
   storageSet('quorum.name', name);
   return name;
+}
+
+function readProfile() {
+  return {
+    position: String(E.qProfilePosition?.value || '').trim().slice(0, 100),
+    rank: String(E.qProfileRank?.value || '').trim().slice(0, 64),
+    skillsets: String(E.qProfileSkills?.value || '').trim().slice(0, 180),
+    department: String(E.qProfileDepartment?.value || '').trim().slice(0, 100)
+  };
 }
 
 function probeServer() {
@@ -429,7 +445,7 @@ function connectSocketAt(url) {
         try { ws.close(); } catch (_) { /* noop */ }
         reject(new Error('Quorum server is not reachable.'));
       }
-    }, 7000);
+    }, 30000);
 
     ws.addEventListener('open', () => {
       clearTimeout(timer);
@@ -472,10 +488,12 @@ function stopHeartbeat() {
   S.heartbeat = null;
 }
 
-async function joinRoom(code, name, minted) {
+async function joinRoom(code, name, minted, profile = readProfile()) {
   clearTimeout(S.probeTimer);
   E.qJoinBtn.disabled = true;
   E.qOpenBtn.disabled = true;
+  S.profile = profile;
+  setJoinStatus('Connecting to the room…', '');
   try {
     await connectSocket();
   } catch (err) {
@@ -490,7 +508,7 @@ async function joinRoom(code, name, minted) {
   S.roomId = code;
   S.intentionalLeave = false;
   storageSet('quorum.room', code);
-  send({ type: 'join', roomId: code, name, minted });
+  send({ type: 'join', roomId: code, name, minted, profile: S.profile });
 }
 
 function onSocketClose() {
@@ -526,7 +544,7 @@ async function tryReconnect() {
     await connectSocket();
     S.reconnectAttempts = 0;
     const name = storageGet('quorum.name') || 'Guest';
-    send({ type: 'join', roomId: S.roomId, name });
+    send({ type: 'join', roomId: S.roomId, name, profile: S.profile });
   } catch (_) {
     tryReconnect();
   }
@@ -632,7 +650,7 @@ async function acquireMedia() {
 
   try {
     const camStream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 960 }, height: { ideal: 540 }, frameRate: { ideal: 24, max: 30 } },
+      video: { facingMode: { ideal: 'user' }, width: { ideal: 960 }, height: { ideal: 540 }, frameRate: { ideal: 24, max: 30 } },
       audio: false
     });
     if (!stillInRoom()) {
@@ -642,6 +660,7 @@ async function acquireMedia() {
     }
     S.cameraTrack = camStream.getVideoTracks()[0] || null;
     if (S.cameraTrack) {
+      S.cameraFacingMode = S.cameraTrack.getSettings?.().facingMode || 'user';
       S.cameraTrack.enabled = S.camOn;
       out.addTrack(S.cameraTrack);
     } else S.camOn = false;
@@ -746,6 +765,128 @@ async function toggleCam() {
   syncDock();
   renderStage();
   send({ type: 'presence', camOn: S.camOn });
+}
+
+async function switchCamera() {
+  if (S.switchingCamera) return;
+  if (!S.cameraTrack || !S.localStream || !navigator.mediaDevices?.getUserMedia) {
+    toast('No camera is available to switch', 'bad');
+    return;
+  }
+
+  const oldTrack = S.cameraTrack;
+  const localStreamAtStart = S.localStream;
+  const oldDeviceId = oldTrack.getSettings?.().deviceId || '';
+  const oldFacingMode = oldTrack.getSettings?.().facingMode || S.cameraFacingMode || 'user';
+  const nextFacingMode = oldFacingMode === 'environment' ? 'user' : 'environment';
+  let nextTrack = null;
+  let stoppedOldTrack = false;
+  S.switchingCamera = true;
+  syncDock();
+
+  const requestCamera = async (video) => {
+    const stream = await navigator.mediaDevices.getUserMedia({ video, audio: false });
+    const track = stream.getVideoTracks()[0];
+    for (const extra of stream.getTracks()) {
+      if (extra !== track) extra.stop();
+    }
+    if (!track) throw new Error('No camera was returned');
+    return track;
+  };
+
+  try {
+    try {
+      nextTrack = await requestCamera({
+        facingMode: { exact: nextFacingMode },
+        width: { ideal: 960 }, height: { ideal: 540 },
+        frameRate: { ideal: 24, max: 30 }
+      });
+    } catch (facingError) {
+      const devices = await navigator.mediaDevices.enumerateDevices().catch(() => []);
+      const alternate = devices.find((device) => device.kind === 'videoinput' && device.deviceId && device.deviceId !== oldDeviceId);
+      if (alternate) {
+        try {
+          nextTrack = await requestCamera({
+            deviceId: { exact: alternate.deviceId },
+            width: { ideal: 960 }, height: { ideal: 540 },
+            frameRate: { ideal: 24, max: 30 }
+          });
+        } catch (_) { /* retry after releasing cameras that permit only one active lens */ }
+      }
+      if (!nextTrack) {
+        try { oldTrack.stop(); } catch (_) {}
+        stoppedOldTrack = true;
+        nextTrack = await requestCamera({
+          facingMode: { ideal: nextFacingMode },
+          width: { ideal: 960 }, height: { ideal: 540 },
+          frameRate: { ideal: 24, max: 30 }
+        });
+      }
+    }
+
+    if (!S.joined || S.localStream !== localStreamAtStart) {
+      nextTrack.stop();
+      return;
+    }
+    const nextDeviceId = nextTrack.getSettings?.().deviceId || '';
+    const actualFacingMode = nextTrack.getSettings?.().facingMode || '';
+    if (oldDeviceId && nextDeviceId === oldDeviceId && (!actualFacingMode || actualFacingMode === oldFacingMode)) {
+      nextTrack.stop();
+      nextTrack = null;
+      throw Object.assign(new Error('No alternate camera found'), { name: 'NotFoundError' });
+    }
+    nextTrack.enabled = S.camOn;
+    S.localStream.removeTrack(oldTrack);
+    S.localStream.addTrack(nextTrack);
+    S.cameraTrack = nextTrack;
+    S.cameraFacingMode = actualFacingMode || nextFacingMode;
+    if (oldTrack !== nextTrack && oldTrack.readyState === 'live') oldTrack.stop();
+    E.qCamVideo.srcObject = S.localStream;
+    await E.qCamVideo.play().catch(() => {});
+    const replaced = await replaceVideoTrack(currentOutgoingVideoTrack());
+    if (!replaced && S.peers.size) toast('Camera switched, but a participant may need to reconnect to see it', 'bad');
+    renderStage();
+    syncDock();
+    send({ type: 'presence', micOn: S.micOn, camOn: S.camOn });
+    toast(S.cameraFacingMode === 'environment' ? 'Rear camera on' : 'Front camera on', 'good');
+  } catch (err) {
+    if (nextTrack && nextTrack !== S.cameraTrack) {
+      try { nextTrack.stop(); } catch (_) {}
+    }
+    if (stoppedOldTrack && S.joined && S.localStream === localStreamAtStart) {
+      try {
+        const restored = await requestCamera(oldDeviceId ? {
+          deviceId: { exact: oldDeviceId },
+          width: { ideal: 960 }, height: { ideal: 540 }
+        } : {
+          facingMode: { ideal: oldFacingMode },
+          width: { ideal: 960 }, height: { ideal: 540 }
+        });
+        restored.enabled = S.camOn;
+        S.localStream.removeTrack(oldTrack);
+        S.localStream.addTrack(restored);
+        S.cameraTrack = restored;
+        S.cameraFacingMode = restored.getSettings?.().facingMode || oldFacingMode;
+        E.qCamVideo.srcObject = S.localStream;
+        await E.qCamVideo.play().catch(() => {});
+        await replaceVideoTrack(currentOutgoingVideoTrack());
+      } catch (_) {
+        S.cameraTrack = null;
+        S.camOn = false;
+        S.localStream.removeTrack(oldTrack);
+        E.qCamVideo.srcObject = S.localStream;
+        await replaceVideoTrack(currentOutgoingVideoTrack());
+        send({ type: 'presence', micOn: S.micOn, camOn: false });
+      }
+    }
+    toast(err?.name === 'NotFoundError' || err?.name === 'OverconstrainedError'
+      ? 'No alternate front or rear camera was found'
+      : 'Could not switch camera. Check camera permission and try again.', 'bad');
+  } finally {
+    S.switchingCamera = false;
+    renderStage();
+    syncDock();
+  }
 }
 
 function ensurePeer(peerId) {
@@ -1022,7 +1163,8 @@ function renderStage() {
             </div>
             <div class="q-chip role"></div>
           </div>
-        </div>`;
+        </div>
+        <button class="q-profile-trigger" type="button" aria-label="View participant profile" title="View participant profile">+</button>`;
       stage.appendChild(el);
       bindBoxEvents(el);
     }
@@ -1030,6 +1172,7 @@ function renderStage() {
     const dragging = S.drag?.kind === 'box' && S.drag.id === p.id;
     el.classList.toggle('dragging', !!dragging);
     el.classList.toggle('self', p.id === S.selfId);
+    el.classList.toggle('mirror-camera', p.id === S.selfId && S.cameraFacingMode === 'user');
     el.classList.toggle('host-box', p.id === room.hostId);
     el.classList.toggle('no-cam', !p.camOn);
     el.classList.toggle('raised', p.handRaised);
@@ -1055,6 +1198,9 @@ function renderStage() {
     roleChip.classList.toggle('host', p.id === room.hostId);
     el.querySelector('.mic').textContent = p.micOn ? '🎙' : '🔇';
     el.querySelector('.mic').classList.toggle('off', !p.micOn);
+    const profileTrigger = el.querySelector('.q-profile-trigger');
+    profileTrigger.hidden = !isHost();
+    profileTrigger.setAttribute('aria-label', `View ${p.name}'s profile`);
 
     if (p.id === S.selfId && S.localStream) {
       const video = el.querySelector('video');
@@ -1311,6 +1457,13 @@ function groupUnderPoint(point, exceptId = null) {
 }
 
 function bindBoxEvents(el) {
+  const profileTrigger = el.querySelector('.q-profile-trigger');
+  profileTrigger.addEventListener('pointerdown', (ev) => ev.stopPropagation());
+  profileTrigger.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    showParticipantProfile(el.dataset.id);
+  });
+
   el.addEventListener('pointerdown', (ev) => {
     if (!isHost() || ev.button !== 0) return;
     ev.preventDefault();
@@ -1354,6 +1507,23 @@ function bindBoxEvents(el) {
   };
   el.addEventListener('pointerup', finish);
   el.addEventListener('pointercancel', finish);
+}
+
+function showParticipantProfile(peerId) {
+  if (!isHost() || !E.qProfileDialog) return;
+  const participant = S.room?.participants.find((person) => person.id === peerId);
+  if (!participant) return;
+  const profile = participant.profile || {};
+  const group = participant.groupId ? groupById(participant.groupId) : null;
+  E.qProfileTitle.textContent = participant.name;
+  E.qProfileRole.textContent = participant.id === S.room.hostId ? 'Host' : 'Room member';
+  E.qProfileViewPosition.textContent = profile.position || 'Not provided';
+  E.qProfileViewRank.textContent = profile.rank || 'Not provided';
+  E.qProfileViewSkills.textContent = profile.skillsets || 'Not provided';
+  E.qProfileViewDepartment.textContent = profile.department || 'Not provided';
+  E.qProfileViewStage.textContent = `${Math.round(participant.box.x * 100)}% across · ${Math.round(participant.box.y * 100)}% down`;
+  E.qProfileViewGroup.textContent = group?.name || 'On the floor';
+  if (!E.qProfileDialog.open) E.qProfileDialog.showModal();
 }
 
 function bindGroupEvents(el) {
@@ -1816,6 +1986,9 @@ function toggleGestureEngine() {
 function syncDock() {
   E.qMicBtn.setAttribute('aria-pressed', String(!!S.micOn));
   E.qCamBtn.setAttribute('aria-pressed', String(!!S.camOn));
+  E.qFlipCamBtn.disabled = !S.cameraTrack || S.switchingCamera;
+  E.qFlipCamBtn.setAttribute('aria-busy', String(S.switchingCamera));
+  E.qFlipCamBtn.title = S.switchingCamera ? 'Switching camera…' : 'Switch between front and rear camera';
   E.qGestureBtn.setAttribute('aria-pressed', String(S.gesture.active));
   E.qGestureBtn.disabled = S.gesture.loading;
   E.qGestureDot.classList.toggle('on', S.gesture.active);
@@ -1829,6 +2002,7 @@ function syncDock() {
 function bindControls() {
   E.qMicBtn.addEventListener('click', toggleMic);
   E.qCamBtn.addEventListener('click', () => void toggleCam());
+  E.qFlipCamBtn.addEventListener('click', () => void switchCamera());
   E.qGestureBtn.addEventListener('click', toggleGestureEngine);
   E.qHandBtn.addEventListener('click', () => {
     const me = selfParticipant();
@@ -1836,6 +2010,10 @@ function bindControls() {
   });
   E.qLeaveBtn.addEventListener('click', () => leaveSpace());
   E.qLeaveBtn2.addEventListener('click', () => leaveSpace());
+  E.qProfileCloseBtn?.addEventListener('click', () => E.qProfileDialog.close());
+  E.qProfileDialog?.addEventListener('click', (ev) => {
+    if (ev.target === E.qProfileDialog) E.qProfileDialog.close();
+  });
 
   E.qRoomChip.addEventListener('click', () => void copyInviteLink());
   E.qInviteBtn?.addEventListener('click', () => void copyInviteLink());

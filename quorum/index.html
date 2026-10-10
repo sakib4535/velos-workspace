@@ -40,6 +40,17 @@
         <input id="qRoom" class="q-input" maxlength="48" placeholder="cedar-k4" autocomplete="off" spellcheck="false" />
       </div>
 
+      <details class="q-profile-details">
+        <summary>Optional profile for the host</summary>
+        <p>These self-reported details are visible only to the room host.</p>
+        <div class="q-profile-form-grid">
+          <label>Position / title<input id="qProfilePosition" class="q-input" maxlength="100" autocomplete="organization-title" placeholder="Product designer" /></label>
+          <label>Rank<input id="qProfileRank" class="q-input" maxlength="64" autocomplete="off" placeholder="Team lead" /></label>
+          <label>Skillsets<input id="qProfileSkills" class="q-input" maxlength="180" autocomplete="off" placeholder="Research, facilitation" /></label>
+          <label>Department<input id="qProfileDepartment" class="q-input" maxlength="100" autocomplete="organization" placeholder="Product" /></label>
+        </div>
+      </details>
+
       <div class="q-join-actions">
         <button class="q-btn primary" id="qOpenBtn" type="button">
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -245,6 +256,11 @@
         <span>Camera</span>
       </button>
 
+      <button class="q-dock-btn q-flip-camera" id="qFlipCamBtn" type="button" title="Switch between front and rear camera" aria-label="Switch between front and rear camera">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h12l-3-3M17 17H5l3 3"/><path d="M19 7v4M5 17v-4"/></svg>
+        <span>Flip</span>
+      </button>
+
       <button class="q-dock-btn" id="qGestureBtn" type="button" aria-pressed="false" title="Toggle AI Hand Gestures">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12m0-6.5v-1a1.5 1.5 0 0 1 3 0V12m0-6v1.5a1.5 1.5 0 0 1 3 0V13m0-4.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-.4a7 7 0 0 1-5.9-3.2L4.3 14a1.6 1.6 0 0 1 2.5-2L8 14"/></svg>
         <span>Gestures</span>
@@ -325,11 +341,33 @@
     </div>
   </dialog>
 
+  <dialog class="q-profile-dialog" id="qProfileDialog" aria-labelledby="qProfileTitle">
+    <div class="q-profile-shell">
+      <header class="q-profile-head">
+        <div>
+          <span class="q-tool-kicker">HOST PROFILE VIEW</span>
+          <h2 id="qProfileTitle">Participant profile</h2>
+          <p id="qProfileRole">Room member</p>
+        </div>
+        <button class="q-icon-btn" id="qProfileCloseBtn" type="button" aria-label="Close participant profile">×</button>
+      </header>
+      <div class="q-profile-view-grid">
+        <div><span>Position / title</span><strong id="qProfileViewPosition">Not provided</strong></div>
+        <div><span>Rank</span><strong id="qProfileViewRank">Not provided</strong></div>
+        <div class="wide"><span>Skillsets</span><strong id="qProfileViewSkills">Not provided</strong></div>
+        <div class="wide"><span>Department</span><strong id="qProfileViewDepartment">Not provided</strong></div>
+        <div class="wide"><span>Stage position</span><strong id="qProfileViewStage">—</strong></div>
+        <div class="wide"><span>Assigned group</span><strong id="qProfileViewGroup">On the floor</strong></div>
+      </div>
+    </div>
+  </dialog>
+
   <!-- local camera: WebRTC source + gesture detection source -->
   <video id="qCamVideo" autoplay muted playsinline hidden></video>
 
   <div class="q-toasts" id="qToasts" aria-live="polite"></div>
 
+  <script src="./quorum-config.js"></script>
   <script src="./quorum-app.js"></script>
 </body>
 </html>

@@ -231,6 +231,16 @@ function serializeParticipant(p) {
   };
 }
 
+function cleanProfile(value) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  return {
+    position: clean(source.position, 100),
+    rank: clean(source.rank, 64),
+    skillsets: clean(source.skillsets, 180),
+    department: clean(source.department, 100)
+  };
+}
+
 function serializeGroup(g) {
   return { id: g.id, name: g.name, color: g.color, x: g.x, y: g.y, w: g.w, h: g.h };
 }
@@ -249,13 +259,17 @@ function remoteControlSnapshot(room) {
   };
 }
 
-function snapshot(room) {
+function snapshot(room, viewerId = null) {
+  const canViewProfiles = viewerId === room.hostId;
   return {
     id: room.id,
     version: room.version,
     hostId: room.hostId,
     createdAt: room.createdAt,
-    participants: [...room.participants.values()].map(serializeParticipant),
+    participants: [...room.participants.values()].map((participant) => ({
+      ...serializeParticipant(participant),
+      ...(canViewProfiles ? { profile: { ...participant.profile } } : {})
+    })),
     groups: [...room.groups.values()].map(serializeGroup),
     motion: room.motion,
     ballot: { ...room.ballot },
@@ -273,7 +287,9 @@ function send(ws, data) {
 
 function broadcast(room, data, exceptId = null) {
   for (const p of room.participants.values()) {
-    if (p.id !== exceptId) send(p.ws, data);
+    if (p.id === exceptId) continue;
+    const payload = data.room ? { ...data, room: snapshot(room, p.id) } : data;
+    send(p.ws, payload);
   }
 }
 
@@ -350,6 +366,7 @@ function handleJoin(ws, msg) {
     ws,
     name: dedupeName(room, name),
     role: isFirst ? 'host' : 'member',
+    profile: cleanProfile(msg.profile),
     box: pickBoxSlot(room),
     groupId: null,
     micOn: true,
@@ -372,7 +389,7 @@ function handleJoin(ws, msg) {
     type: 'joined',
     selfId: peerId,
     minted: !!msg.minted,
-    room: snapshot(room)
+    room: snapshot(room, peerId)
   });
 
   /*

@@ -15,7 +15,7 @@ In Windows PowerShell, use `npm.cmd install` and `npm.cmd start` if the `npm` co
 
 ## Public deployment and room invitations
 
-The project includes a Render Blueprint in `render.yaml`. Push the project folder to a GitHub repository, create a Blueprint in Render from that repository, and deploy the `velos-quorum` service. Render supplies HTTPS and routes WebSocket connections through the same public service. The app listens on Render's `PORT` and provides `/healthz` for deploy health checks.
+The project includes a Render Blueprint in `render.yaml`. Push the project folder to a GitHub repository, create a Blueprint in Render from that repository, and deploy the `velos-quorum` service. Render supplies HTTPS and routes WebSocket connections through the same public service. The app listens on Render's `PORT` and provides `/healthz` for deploy health checks. The bundled `quorum/quorum-config.js` routes public Quorum rooms to `wss://velos-quorum.onrender.com/quorum-space`; if Render shows a different service hostname, update that file to match it and redeploy the Vercel site.
 
 After deployment, open the public `/quorum/` page, create a room, and use **Invite** in the room header. The copied URL opens the same deployment with that room code prefilled; each guest enters a name and selects **Join with code**. Guests need browser access to camera/microphone if they want to use video. In **Tools**, open a platform tile in its own tab, return to Quorum, and choose **Share with Quorum**. Pick that tab to present it. Full-display sharing works for presenting; host-approved ShareView remote control is available only when the Node server runs on the Windows computer being controlled, so it is not available from a Render-hosted service.
 
@@ -23,12 +23,14 @@ The included Blueprint uses Render's free plan to keep initial hosting cost-free
 
 ### Vercel deployment
 
-The root `vercel.json` tells Vercel to include the landing page, logo, presenter app, and Quorum files in the `server.js` deployment. When changing the Vercel project root, select this project folder itself so Vercel can see both `server.js` and `vercel.json`. The Vercel deployment can serve the site and WebSocket endpoint, but Quorum rooms remain in server memory; a multi-instance deployment needs shared room state and pub/sub before it is dependable for live meetings. ShareView remote control remains Windows-host-only.
+Deploy this project folder to Vercel for the website, then deploy its `render.yaml` service to Render for Quorum WebSockets and room state. Keep the Render service at one instance because active room state is held in that server process. Vercel serves the pages and static files; the Quorum browser client connects to the Render WebSocket endpoint. Invite links can use the Vercel website URL, while Render handles signaling and shared participant state. ShareView remote control remains Windows-host-only.
 
 ## Quorum
 
 - The first participant is the host. Participants appear in movable boxes; the host can arrange them into up to eight groups.
 - The host can set a motion and open a timed or untimed ballot. Participants can vote with buttons or hand gestures.
+- Participants may enter an optional self-reported position, rank, skillsets, and department before joining. The host sees those details with the white **+** button on a participant box; other members receive no profile fields from the server.
+- On phones with front and rear cameras, use **Flip** in the call dock to switch lenses. Browsers with only one camera report that no alternate lens is available.
 - Present the built-in Quorum slides or share a screen from the presentation controls.
 - The shared stage offers **Fit** to show the whole screen, **Fill** to use the available stage area, and **Full screen** to expand the presentation view. Fill can crop the shared display's edges.
 - The **Tools** menu is a one-click launcher for Google Docs, Sheets, Slides, Drive, Google Maps, OpenStreetMap, Trello, Notion, GitHub, Miro, Excalidraw, Canva, Padlet, and Mermaid Live. Each tile opens that platform in a new tab; free-plan limits and sign-in requirements vary by provider.
