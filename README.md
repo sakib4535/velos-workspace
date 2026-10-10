@@ -1,54 +1,169 @@
-# Velos + Quorum
+VELOS × QUORUM
 
-Velos is a hand-gesture presentation workspace. Quorum is the companion meeting space for small-group facilitation, host-arranged participant boxes, ballots, and gesture voting.
+### Move ideas. Shape the room. Decide together.
 
-## Start
+**A gesture-first presentation workspace paired with a spatial collaboration room.**
 
-Requires Node.js 18.11 or newer.
+[Open Quorum](https://velos-workspace.onrender.com/quorum/) · [Check service health](https://velos-workspace.onrender.com/healthz)
 
-    npm install
-    npm start
+![Node.js 18.11+](https://img.shields.io/badge/Node.js-%3E%3D18.11-339933?logo=nodedotjs&logoColor=white)
+![Vanilla JavaScript](https://img.shields.io/badge/Client-Vanilla%20JS-f7df1e?logo=javascript&logoColor=111111)
+![WebSockets](https://img.shields.io/badge/Realtime-WebSockets-7c9cf5)
+![Render](https://img.shields.io/badge/Room%20server-Render-46e3b7?logo=render&logoColor=111111)
 
-Open http://localhost:8788. Use **Velos Quorum** to open a space or use **Velos Presenter** for the gesture-controlled slide workspace. Quorum rooms require the server; do not open an HTML file directly from File Explorer. If port 8788 is already occupied, stop the older server or choose another port. In Windows Command Prompt, use: `set PORT=8898 && npm start`, then open `http://localhost:8898`. In PowerShell, use: `$env:PORT=8898; npm.cmd start`, then open `http://localhost:8898`.
+</div>
 
-In Windows PowerShell, use `npm.cmd install` and `npm.cmd start` if the `npm` command is blocked by script execution policy. Keep the terminal open while using Quorum. The join screen retries server detection automatically. If you opened the page through a local preview on another port, the client also checks the Quorum server at `localhost:8788`.
+<p align="center">
+  <img src="assets/readme-hero.gif" alt="Animated Velos Quorum stage with two host-arranged participant groups" width="100%" />
+</p>
 
-## Public deployment and room invitations
+<p align="center"><sub>Illustrative animation; the live interface may differ.</sub></p>
 
-The project includes a Render Blueprint in `render.yaml`. Deploy the Node service in Render as well as deploying the website to Vercel; Vercel alone does not run the persistent Quorum WebSocket server. This project is configured for `https://velos-workspace.onrender.com` (the service shown in your Render dashboard). After Render finishes deploying, open `https://velos-workspace.onrender.com/healthz` and confirm it returns a JSON `status: ok`. Render supplies HTTPS and routes WebSocket connections through the same public service. The app listens on Render's `PORT` and provides `/healthz` for deploy health checks. Quorum pages served by Render automatically connect back to their current Render host; pages served by Vercel connect to `wss://velos-workspace.onrender.com/quorum-space`. A free Render service can take 50 seconds or more to wake after inactivity; the join screen reports the active endpoint if it cannot connect.
+Velos brings hand-tracked presentation controls and small-group facilitation into one workspace. In Quorum, a host can move participant boxes across a shared stage, create groups, set a motion, and run a ballot. People can vote with controls or supported hand gestures.
 
-After deployment, open the public `/quorum/` page, create a room, and use **Invite** in the room header. The copied URL opens the same deployment with that room code prefilled; each guest enters a name and selects **Join with code**. Guests need browser access to camera/microphone if they want to use video. In **Tools**, open a platform tile in its own tab, return to Quorum, and choose **Share with Quorum**. Pick that tab to present it. Full-display sharing works for presenting; host-approved ShareView remote control is available only when the Node server runs on the Windows computer being controlled, so it is not available from a Render-hosted service.
+## Two spaces, one flow
 
-The included Blueprint uses Render's free plan to keep initial hosting cost-free. Free services can sleep after inactivity, and this app keeps active room state in memory, so a restart or sleep cycle ends current rooms. For scheduled sessions, select an always-on plan and keep the service at one instance: room state is local to the running server, so horizontal scaling is not configured. The app currently has no accounts or private-room password; anyone with an invite link can attempt to join. Peer-to-peer video may need a TURN relay on restrictive networks.
+| **Velos Presenter** | **Quorum** |
+| --- | --- |
+| Present built-in slides or a PDF. Use camera-based hand tracking for supported presentation controls, annotate, and share a screen. | Meet in a room with participant boxes, host-arranged groups, a facilitation center, live ballots, and gesture voting. |
 
-### Vercel deployment
+```mermaid
+flowchart LR
+  A[Host browser] <-->|Room state and signaling · WSS| S[Quorum Node server]
+  B[Participant browser] <-->|Room state and signaling · WSS| S
+  A <-->|Audio and video · WebRTC| B
+  A -->|Host arranges boxes and runs ballots| S
+  B -->|Votes and gesture events| S
+```
 
-Deploy this project folder to Vercel for the website, then deploy the Node service to Render for Quorum WebSockets and room state. Keep the Render service at one instance because active room state is held in that server process. Vercel serves the pages and static files; the Quorum browser client connects to `velos-workspace.onrender.com`. Invite links can use the Vercel website URL, while Render handles signaling and shared participant state. ShareView remote control remains Windows-host-only.
+The server coordinates room membership, host permissions, group layout, ballots, and WebRTC signaling. When the network allows it, browsers send audio and video directly to one another with WebRTC.
 
-## Quorum
+## What you can do
 
-- The first participant is the host. Participants appear in movable boxes; the host can arrange them into up to eight groups.
-- The host can set a motion and open a timed or untimed ballot. Participants can vote with buttons or hand gestures.
-- Participants may enter an optional self-reported position, rank, skillsets, and department before joining. The host sees those details with the white **+** button on a participant box; other members receive no profile fields from the server.
-- On phones with front and rear cameras, use **Flip** in the call dock to switch lenses. Browsers with only one camera report that no alternate lens is available.
-- Present the built-in Quorum slides or share a screen from the presentation controls.
-- The shared stage offers **Fit** to show the whole screen, **Fill** to use the available stage area, and **Full screen** to expand the presentation view. Fill can crop the shared display's edges.
-- The **Tools** menu is a one-click launcher for Google Docs, Sheets, Slides, Drive, Google Maps, OpenStreetMap, Trello, Notion, GitHub, Miro, Excalidraw, Canva, Padlet, and Mermaid Live. Each tile opens that platform in a new tab; free-plan limits and sign-in requirements vary by provider.
-- ShareView-inspired remote control is available only when this Node server runs on the Windows computer being shared. The host shares the full display, and must explicitly approve one participant's request. The host can revoke control at any time; control ends when sharing stops or the participant leaves.
-- Remote control sends mouse and keyboard input to the Windows computer running the server. Only share with people you trust. Screen sharing requires browser permission each time. Choose the primary display to keep the shared picture aligned with the computer's cursor.
+### Present with Velos
 
-## Requirements and limits
+- Use the presenter workspace and its camera-based gesture controls.
+- Present the built-in deck or open a local PDF.
+- Share your screen and use the stage presentation controls.
+- Open Quorum directly from the Velos workspace.
 
-- Camera, microphone, and screen capture need a secure browser context (localhost or HTTPS) and individual browser permission.
-- Gesture detection loads MediaPipe from a CDN, so gesture features need internet access. It tries GPU tracking first and falls back to CPU tracking when GPU support is unavailable. Manual voting and mouse dragging do not need hand tracking.
-- Media uses peer-to-peer WebRTC. Some networks need a TURN relay; configure one before relying on restrictive networks.
-- Room state lives in server memory and resets when the server restarts or the room empties. There are no accounts or persistent room storage.
-- The local server accepts up to 16 participants and eight groups per room. Set PORT to choose another listen port.
+### Facilitate with Quorum
 
-## Project structure
+- Open a room or join with a room code and invite link.
+- Arrange participant boxes by dragging them on the stage; create up to **eight groups**.
+- Set a motion, open a timed or untimed ballot, and collect **yes / no / abstain** votes.
+- Vote with the controls or supported hand gestures. Manual voting remains available if hand tracking is unavailable.
+- Let the host view optional, self-reported participant profile details. Those profile fields are sent only to the host.
+- Switch between front and rear phone cameras when the device and browser expose both.
+- Share a tab, window, or display with the room. The browser asks for screen-sharing permission.
+- Open one-click tools for Docs, Sheets, Slides, Drive, Maps, OpenStreetMap, Trello, Notion, GitHub, Miro, Excalidraw, Canva, Padlet, and Mermaid Live. External services may require an account.
+- Use host-approved ShareView-style remote control **only when Quorum is running locally on the Windows computer being controlled**. This is not available from the Render-hosted service.
 
-- index.html and velos-face-login.js: Velos landing page.
-- app/: the active Velos presenter page, styles, and hand-tracking integration.
-- quorum/: the Quorum page, styles, and meeting client.
-- server.js: static hosting, room state, WebSocket signaling, and host-authorized remote-control input.
-- remote-input.js: Windows-only local input bridge, started only after the host approves a control request.
+## Run it locally
+
+### Requirements
+
+- Node.js **18.11 or newer**
+- A modern browser
+- Internet access for MediaPipe hand tracking and external collaboration tools
+
+### Start the server
+
+```bash
+npm install
+npm start
+```
+
+Open [http://localhost:8788](http://localhost:8788). Choose **Velos Quorum** or **Velos Presenter** from the landing page. Keep the terminal open while using the local server; opening the HTML files directly from File Explorer will not start room signaling.
+
+On Windows PowerShell, if `npm` is blocked by script policy:
+
+```powershell
+npm.cmd install
+npm.cmd start
+```
+
+The default port is `8788`. If it is occupied, choose another port and open the matching address:
+
+```powershell
+$env:PORT=8898
+npm.cmd start
+```
+
+### Check JavaScript syntax
+
+```bash
+npm run check
+```
+
+This command runs Node's syntax checker on the server and application scripts. It is not an end-to-end browser test suite.
+
+## Deploy
+
+### Render room server
+
+The Node service is the Quorum WebSocket endpoint and the source of live room state. This repository includes a Render Blueprint in [`render.yaml`](render.yaml).
+
+1. Connect the repository to Render and deploy the Blueprint.
+2. Confirm the service is live and its health check returns `{"status":"ok"}` at `/healthz`.
+3. Open `/quorum/` on the deployed service and create a room.
+4. Keep the service to **one instance**: room state currently lives in that server process.
+
+The current service URL is [`velos-workspace.onrender.com`](https://velos-workspace.onrender.com). Quorum pages opened on a `*.onrender.com` host connect to that same host automatically. If you use a different Render hostname, update the external-host fallback in [`quorum/quorum-config.js`](quorum/quorum-config.js) and [`quorum/quorum-app.js`](quorum/quorum-app.js), then redeploy the website.
+
+### Optional Vercel website
+
+Vercel can serve the website, while Render continues to handle Quorum WebSockets and shared room state. The client fallback in this project points Vercel-hosted Quorum pages at `wss://velos-workspace.onrender.com/quorum-space`. Deploy the same project revision to Vercel and Render so the page and the room server stay in sync.
+
+Render's free service can spin down when idle. The first visit after inactivity may take **50 seconds or more** to wake the service. A restart or sleep cycle also clears active rooms because room data is not persisted.
+
+## Join and invite
+
+1. Open the deployed `/quorum/` page.
+2. Enter a display name and choose **Open a room**. The first person in the room becomes host.
+3. Use **Invite** in the room header to copy a link for that room.
+4. Guests open the link, enter a name, and join the room.
+5. As host, drag participant boxes into groups, set the motion, and open a ballot from the facilitation center.
+
+## Privacy and operating limits
+
+- There are no user accounts, password-protected rooms, or persistent room records. Anyone with a room link or code can attempt to join; do not use room codes as a privacy boundary.
+- Names, presence, room layout, ballots, and signaling pass through the room server. The server keeps active room state in memory and clears it when the room ends or the process restarts.
+- Audio and video use peer-to-peer WebRTC when the participants' networks allow it. The project includes public STUN servers, but no TURN relay; restrictive networks may need a TURN service for reliable media.
+- Camera and microphone access require browser permission. Screen capture requires a separate browser permission and can be stopped by the person sharing.
+- Hand tracking loads MediaPipe from a CDN and needs internet access. Manual controls remain available if tracking cannot start.
+- The Windows remote-input feature can send mouse and keyboard actions to the computer running the local server. Only approve people you trust, and revoke control when it is no longer needed.
+- The current room limit is **16 participants total** and **eight groups** per room.
+
+## Project map
+
+```text
+.
+├── index.html                 Velos landing page
+├── assets/                    Brand marks and README hero animation
+├── app/                       Velos presenter interface and styles
+├── quorum/                    Quorum interface, styles, and browser client
+├── server.js                  Static server, room state, WebSocket signaling
+├── remote-input.js            Windows-only, host-approved local input bridge
+├── render.yaml                Render service and health-check configuration
+├── vercel.json                Vercel deployment configuration
+└── package.json               Start, development, and syntax-check scripts
+```
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| Quorum says the server is unavailable | Open `/healthz`, wait for a free Render service to wake, and confirm the Quorum client points at your current Render hostname. |
+| A room link opens but people do not appear together | Make sure every participant uses the same deployed website and room code, and that the Render WebSocket service is live. |
+| Camera or microphone will not start | Use `localhost` or HTTPS, then allow camera and microphone access in the browser. |
+| Video does not connect on a restricted network | Configure a TURN relay; STUN alone is not sufficient on every network. |
+| `EADDRINUSE` on port 8788 | Another process is using the port. Stop it or run the server on a different `PORT`. |
+
+---
+
+<div align="center">
+
+**Present with intention. Arrange the room. Make the next move together.**
+
+</div>
