@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: velos-quorum
+    runtime: node
+    plan: free
+    region: singapore
+    numInstances: 1
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit

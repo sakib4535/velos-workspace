@@ -1,0 +1,17 @@
+{
+  "name": "velos-quorum-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Velos presentation workspace with a gesture-first Quorum meeting space",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "check": "node --check server.js && node --check remote-input.js && node --check velos-face-login.js && node --check app/app.js && node --check app/markup/app-markup.js && node --check app/markup/gesture-markup.js && node --check quorum/quorum-app.js"
+  },
+  "engines": {
+    "node": ">=18.11"
+  },
+  "dependencies": {
+    "ws": "^8.21.3"
+  }
+}

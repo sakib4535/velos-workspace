@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 272 88" role="img" aria-labelledby="title">
+  <title id="title">Velos</title>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="42" cy="44" r="32" stroke="#777b82" stroke-width="1.5"/>
+    <path d="M24 29 42 59 61 27" stroke="#fff" stroke-width="7"/>
+    <path d="M8 44h9m59 0h8" stroke="#aeb1b7" stroke-width="1.5"/>
+  </g>
+  <text x="91" y="64" fill="#fff" font-family="Inter, Arial, Helvetica, sans-serif" font-size="58" font-weight="700" letter-spacing="-2.6">Velos</text>
+</svg>
