@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: velos-quorum
+    name: velos-workspace
     runtime: node
     plan: free
     region: singapore

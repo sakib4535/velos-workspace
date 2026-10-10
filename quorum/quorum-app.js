@@ -22,7 +22,7 @@ const CFG = Object.freeze({
     window.QUORUM_CONFIG?.wsUrl ||
     (['localhost', '127.0.0.1', '::1'].includes(location.hostname)
       ? `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/quorum-space`
-      : 'wss://velos-quorum.onrender.com/quorum-space'),
+      : `wss://${location.hostname.endsWith('.onrender.com') ? location.host : 'velos-workspace.onrender.com'}/quorum-space`),
   rtcConfig: {
     iceServers: [
       { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }
