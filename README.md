@@ -21,6 +21,10 @@ After deployment, open the public `/quorum/` page, create a room, and use **Invi
 
 The included Blueprint uses Render's free plan to keep initial hosting cost-free. Free services can sleep after inactivity, and this app keeps active room state in memory, so a restart or sleep cycle ends current rooms. For scheduled sessions, select an always-on plan and keep the service at one instance: room state is local to the running server, so horizontal scaling is not configured. The app currently has no accounts or private-room password; anyone with an invite link can attempt to join. Peer-to-peer video may need a TURN relay on restrictive networks.
 
+### Vercel deployment
+
+The root `vercel.json` tells Vercel to include the landing page, logo, presenter app, and Quorum files in the `server.js` deployment. When changing the Vercel project root, select this project folder itself so Vercel can see both `server.js` and `vercel.json`. The Vercel deployment can serve the site and WebSocket endpoint, but Quorum rooms remain in server memory; a multi-instance deployment needs shared room state and pub/sub before it is dependable for live meetings. ShareView remote control remains Windows-host-only.
+
 ## Quorum
 
 - The first participant is the host. Participants appear in movable boxes; the host can arrange them into up to eight groups.

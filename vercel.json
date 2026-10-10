@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "server.js": {
+      "includeFiles": "{index.html,velos-face-login.js,remote-input.js,assets/**,app/**,quorum/**}"
+    }
+  }
+}
