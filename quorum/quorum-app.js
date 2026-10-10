@@ -20,7 +20,9 @@
 const CFG = Object.freeze({
   wsUrl:
     window.QUORUM_CONFIG?.wsUrl ||
-    `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/quorum-space`,
+    (['localhost', '127.0.0.1', '::1'].includes(location.hostname)
+      ? `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/quorum-space`
+      : 'wss://velos-quorum.onrender.com/quorum-space'),
   rtcConfig: {
     iceServers: [
       { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }
@@ -355,13 +357,14 @@ function probeServer() {
     setJoinStatus('Run the Quorum server, then open http://localhost:8788/quorum/', 'bad');
     return;
   }
-  setJoinStatus('Checking server…', '');
   const urls = getWebSocketUrls();
+  const publicBackend = urls.some((url) => !isLocalWebSocketUrl(url));
+  setJoinStatus(publicBackend ? 'Connecting to the Quorum service…' : 'Checking server…', '');
   const tryNext = (index) => {
     if (S.joined || index >= urls.length) {
       if (!S.joined) {
-        setJoinStatus('Server unavailable. In the project folder run: npm.cmd install, then npm.cmd start. Open http://localhost:8788/quorum/', 'bad');
-        S.probeTimer = setTimeout(probeServer, 4000);
+        setJoinStatus(serverUnavailableMessage(), 'bad');
+        S.probeTimer = setTimeout(probeServer, publicBackend ? 10000 : 4000);
       }
       return;
     }
@@ -383,7 +386,7 @@ function probeServer() {
     const timer = setTimeout(() => {
       try { probe.close(); } catch (_) { /* noop */ }
       failed();
-    }, 1600);
+    }, publicBackend ? 15000 : 1600);
     probe.addEventListener('open', () => {
       if (settled) return;
       settled = true;
@@ -408,6 +411,24 @@ function getWebSocketUrls() {
     return [primary, `ws://${location.hostname}:8788/quorum-space`];
   }
   return [primary];
+}
+
+function isLocalWebSocketUrl(url) {
+  try {
+    const host = new URL(url).hostname.replace(/^\[|\]$/g, '').toLowerCase();
+    return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  } catch (_) {
+    return false;
+  }
+}
+
+function serverUnavailableMessage() {
+  if (getWebSocketUrls().every(isLocalWebSocketUrl)) {
+    return 'Server unavailable. In the project folder run: npm.cmd install, then npm.cmd start. Open http://localhost:8788/quorum/';
+  }
+  let endpoint = 'the configured Render service';
+  try { endpoint = new URL(CFG.wsUrl).host; } catch (_) { /* keep generic endpoint label */ }
+  return `Quorum room service is unavailable at ${endpoint}. Confirm the Render service is deployed and active, then retry.`;
 }
 
 function setJoinStatus(text, mode) {
@@ -445,7 +466,7 @@ function connectSocketAt(url) {
         try { ws.close(); } catch (_) { /* noop */ }
         reject(new Error('Quorum server is not reachable.'));
       }
-    }, 30000);
+    }, isLocalWebSocketUrl(url) ? 12000 : 90000);
 
     ws.addEventListener('open', () => {
       clearTimeout(timer);
@@ -499,9 +520,12 @@ async function joinRoom(code, name, minted, profile = readProfile()) {
   } catch (err) {
     E.qJoinBtn.disabled = false;
     E.qOpenBtn.disabled = false;
-    setJoinStatus(err?.message || 'Server offline — start with: npm start', 'bad');
-    S.probeTimer = setTimeout(probeServer, 4000);
-    toast(err?.message || 'Could not reach the Quorum server', 'bad');
+    const message = isLocalWebSocketUrl(CFG.wsUrl)
+      ? (err?.message || 'Server offline — start with: npm start')
+      : serverUnavailableMessage();
+    setJoinStatus(message, 'bad');
+    S.probeTimer = setTimeout(probeServer, isLocalWebSocketUrl(CFG.wsUrl) ? 4000 : 10000);
+    toast(message, 'bad');
     return;
   }
 
@@ -525,7 +549,7 @@ function onSocketClose() {
     S.drag = null;
     tryReconnect();
   } else {
-    setJoinStatus('Server offline — run: node server.js', 'bad');
+    setJoinStatus(serverUnavailableMessage(), 'bad');
     E.qJoinBtn.disabled = false;
     E.qOpenBtn.disabled = false;
   }
