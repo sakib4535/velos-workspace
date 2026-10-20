@@ -52,9 +52,15 @@ The code does not create a relay account or enable a paid service. Cloudflare, R
 
 Remote video autoplays muted and remote audio plays through its own audio element. If the browser blocks sound, select **Enable audio** in the meeting header. If the network connection stalls, the meeting shows a media warning and **Retry audio/video** control instead of silently leaving only empty tiles. When no TURN relay is configured, that warning identifies the missing network fallback. A relay must be reachable and its credentials valid; the signaling server cannot replace it.
 
+Automatic media recovery refreshes TURN credentials before restarting ICE, preserving the connection's negotiated settings. Repeated failure events share the pending refresh, and leaving the room cancels its effect. If a settings update is rejected, the client still attempts recovery with the previous configuration. **Retry audio/video** starts audio playback during the button click so the credential request does not consume the browser's playback permission.
+
 ### Vercel deployment
 
 Deploy this project folder to Vercel for the website, then deploy the Node service to Render for Quorum WebSockets and room state. Keep the Render service at one instance because active room state is held in that server process. Vercel serves the pages and static files; the Quorum browser client connects to `velos-workspace.onrender.com`. Invite links can use the Vercel website URL, while Render handles signaling and shared participant state. ShareView remote control remains Windows-host-only.
+
+`vercel.json` explicitly selects the **Other** preset (`framework: null`), runs `npm run build:site`, and publishes only `dist/`. The build regenerates the shared modules and copies the website's public assets into that directory. It does not package `server.js` as a Vercel Function. This prevents page and favicon requests from entering the failing room-server module initialization that produced `Cannot destructure property 'initFocus' ...` HTTP 500s. `/favicon.ico` resolves to the existing SVG logo. Render continues to run `npm run build` and `npm start`.
+
+After uploading or committing this change, create a **new Vercel deployment from the updated source**; redeploying the old source will retain the old configuration. Verify `/`, `/app/`, `/quorum/`, `/quorum/focus-core.mjs`, and `/favicon.ico`. Room joining still depends on the separately deployed Render backend. The generated `dist/` directory contains no environment files, server modules, tests, or runtime state.
 
 ## Quorum
 

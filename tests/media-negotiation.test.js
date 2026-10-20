@@ -127,6 +127,7 @@ class PeerConnectionModel {
   async addIceCandidate() {}
   close() { this.connectionState = 'closed'; }
   restartIce() {}
+  getConfiguration() { return { ...this.config }; }
   setConfiguration(config) { this.config = config; }
 }
 

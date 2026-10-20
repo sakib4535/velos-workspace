@@ -1,0 +1,2432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#030303" />
+  <title>Velos — AI Screen and Presentation Control</title>
+
+  <style>
+
+
+
+    /* ==========================================================
+       VELOS — SILVER MAGIC RINGS HERO
+       ========================================================== */
+
+    :root {
+      --bg: #030303;
+      --bg-soft: #070707;
+
+      --white: #f5f5f7;
+      --silver: #d9d9de;
+      --silver-bright: #f4f4f7;
+      --silver-mid: #9a9aa2;
+      --silver-dark: #5f5f67;
+
+      --muted: #898990;
+
+      --line: rgba(255,255,255,.08);
+      --line-strong: rgba(255,255,255,.14);
+    }
+
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+
+    body {
+      min-height: 100vh;
+
+      background:
+        radial-gradient(
+          circle at 50% 38%,
+          rgba(255,255,255,.055),
+          transparent 32%
+        ),
+        #030303;
+
+      color: var(--white);
+
+      font-family:
+        Inter,
+        ui-sans-serif,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+      overflow-x: hidden;
+    }
+
+
+    /* ==========================================================
+       BACKGROUND GRID
+       ========================================================== */
+
+    body::before {
+      content: "";
+
+      position: fixed;
+      inset: 0;
+
+      pointer-events: none;
+
+      background:
+        linear-gradient(
+          rgba(255,255,255,.034) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(255,255,255,.034) 1px,
+          transparent 1px
+        );
+
+      background-size: 38px 38px;
+
+      -webkit-mask-image:
+        radial-gradient(
+          ellipse at 50% 40%,
+          black 0%,
+          rgba(0,0,0,.85) 38%,
+          transparent 85%
+        );
+
+      mask-image:
+        radial-gradient(
+          ellipse at 50% 40%,
+          black 0%,
+          rgba(0,0,0,.85) 38%,
+          transparent 85%
+        );
+
+      z-index: 0;
+    }
+
+
+    /* ==========================================================
+       NOISE
+       ========================================================== */
+
+    .noise {
+      position: fixed;
+      inset: 0;
+
+      pointer-events: none;
+
+      opacity: .025;
+
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.6'/%3E%3C/svg%3E");
+
+      z-index: 1;
+    }
+
+
+    /* ==========================================================
+       PAGE
+       ========================================================== */
+
+    .page {
+      position: relative;
+      z-index: 2;
+
+      min-height: 100vh;
+
+      display: flex;
+      flex-direction: column;
+    }
+
+
+    /* ==========================================================
+       NAVIGATION
+       ========================================================== */
+
+    nav {
+      width: min(1480px, calc(100% - 48px));
+      height: 86px;
+
+      margin: 0 auto;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      border-bottom: 1px solid var(--line);
+
+      position: relative;
+      z-index: 20;
+    }
+
+
+    .velos-brand {
+      display: flex;
+      align-items: center;
+
+      height: 86px;
+
+      text-decoration: none;
+    }
+
+
+    .velos-logo {
+      width: 220px;
+      height: 72px;
+
+      display: block;
+
+      object-fit: contain;
+      object-position: left center;
+
+      transition:
+        transform .25s ease,
+        opacity .25s ease;
+    }
+
+
+    .velos-brand:hover .velos-logo {
+      transform: translateY(-1px);
+      opacity: .92;
+    }
+
+
+    /* NAV STATUS */
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+
+      gap: 10px;
+
+      color: #85858d;
+
+      font-size: 12px;
+
+      letter-spacing: .02em;
+    }
+
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+
+      border-radius: 50%;
+
+      background: #dedee3;
+
+      box-shadow:
+        0 0 7px rgba(255,255,255,.75),
+        0 0 18px rgba(255,255,255,.22);
+
+      animation: statusPulse 1.8s ease-in-out infinite;
+    }
+
+
+    @keyframes statusPulse {
+      0%,
+      100% {
+        opacity: .45;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+
+    /* ==========================================================
+       HERO
+       ========================================================== */
+
+    .hero {
+      position: relative;
+
+      width: min(1200px, calc(100% - 40px));
+
+      margin: 0 auto;
+
+      flex: 1;
+
+      min-height: calc(100vh - 86px);
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      padding:
+        50px
+        0
+        90px;
+    }
+
+
+    .hero-inner {
+      width: 100%;
+      max-width: 980px;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      text-align: center;
+
+      position: relative;
+    }
+
+
+    /* ==========================================================
+       TOP LABEL
+       ========================================================== */
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      gap: 9px;
+
+      padding: 8px 13px;
+
+      border: 1px solid rgba(255,255,255,.11);
+
+      border-radius: 999px;
+
+      background: rgba(255,255,255,.025);
+
+      backdrop-filter: blur(8px);
+
+      color: #a8a8af;
+
+      font-size: 10px;
+      font-weight: 700;
+
+      letter-spacing: .16em;
+
+      text-transform: uppercase;
+
+      margin-bottom: 7px;
+
+      position: relative;
+      z-index: 8;
+    }
+
+
+    .eyebrow-dot {
+      width: 5px;
+      height: 5px;
+
+      border-radius: 50%;
+
+      background: #e5e5e9;
+
+      box-shadow:
+        0 0 9px rgba(255,255,255,.85);
+    }
+
+
+    /* ==========================================================
+       MAGIC RINGS STAGE
+       ========================================================== */
+
+    .magic-stage {
+      position: relative;
+
+      width: min(940px, 92vw);
+      height: clamp(330px, 48vw, 500px);
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      margin-top: -5px;
+      margin-bottom: -15px;
+
+      isolation: isolate;
+    }
+
+
+    /* subtle glow behind shader */
+
+    .magic-stage::before {
+      content: "";
+
+      position: absolute;
+
+      left: 50%;
+      top: 50%;
+
+      transform: translate(-50%, -50%);
+
+      width: 50%;
+      aspect-ratio: 1;
+
+      border-radius: 50%;
+
+      background:
+        radial-gradient(
+          circle,
+          rgba(255,255,255,.07) 0%,
+          rgba(255,255,255,.025) 35%,
+          transparent 70%
+        );
+
+      filter: blur(22px);
+
+      pointer-events: none;
+
+      z-index: 0;
+    }
+
+
+    /* actual Three.js / WebGL mount */
+
+    #magic-rings {
+      position: absolute;
+      inset: 0;
+
+      width: 100%;
+      height: 100%;
+
+      z-index: 1;
+
+      pointer-events: auto;
+    }
+
+
+    #magic-rings canvas {
+      display: block;
+
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+
+    /* ==========================================================
+       VELOS IN CENTER OF MAGIC RINGS
+       ========================================================== */
+
+    .velos-center {
+      position: relative;
+
+      z-index: 5;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      pointer-events: none;
+
+      transform: translateY(-1px);
+    }
+
+
+    .velos-word {
+      position: relative;
+
+      font-size: clamp(96px, 14vw, 190px);
+
+      line-height: .88;
+
+      letter-spacing: -.045em;
+
+      font-weight: 800;
+
+      color: #fff;
+      -webkit-text-fill-color: #fff;
+      background: none;
+
+      text-shadow:
+        0 0 24px rgba(255,255,255,.06);
+
+      filter:
+        drop-shadow(
+          0 20px 40px rgba(0,0,0,.55)
+        );
+    }
+
+
+    .center-caption {
+      margin-top: 15px;
+
+      color: #6e6e76;
+
+      font-size: 9px;
+      font-weight: 700;
+
+      letter-spacing: .24em;
+
+      text-transform: uppercase;
+    }
+
+
+    /* ==========================================================
+       HERO TEXT
+       ========================================================== */
+
+    .hero-copy {
+      position: relative;
+      z-index: 8;
+
+      width: 100%;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      text-align: center;
+    }
+
+
+    .hero-heading {
+      max-width: 800px;
+
+      font-size: clamp(34px, 4.5vw, 59px);
+
+      line-height: 1.04;
+
+      letter-spacing: -.047em;
+
+      font-weight: 710;
+
+      color: #eeeeef;
+    }
+
+
+    .hero-heading .soft {
+      color: #919199;
+
+      font-weight: 570;
+    }
+
+
+    .lead {
+      max-width: 690px;
+
+      margin-top: 21px;
+
+      color: #919198;
+
+      font-size: clamp(15px, 1.4vw, 18px);
+
+      line-height: 1.65;
+
+      letter-spacing: -.012em;
+    }
+
+
+    /* ==========================================================
+       CTA
+       ========================================================== */
+
+    .cta-area {
+      margin-top: 30px;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      gap: 12px;
+    }
+
+
+    .cta {
+      min-width: 238px;
+      min-height: 57px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 22px;
+
+      padding:
+        8px
+        9px
+        8px
+        23px;
+
+      border-radius: 12px;
+
+      border:
+        1px solid
+        rgba(255,255,255,.68);
+
+      background:
+        linear-gradient(
+          180deg,
+          #f7f7f8 0%,
+          #c5c5ca 100%
+        );
+
+      color: #050505;
+
+      text-decoration: none;
+
+      font-size: 14px;
+      font-weight: 800;
+
+      letter-spacing: -.01em;
+
+      box-shadow:
+        0 14px 42px rgba(255,255,255,.06),
+        inset 0 1px 0 rgba(255,255,255,.9);
+
+      transition:
+        transform .25s ease,
+        box-shadow .25s ease;
+    }
+
+
+    .cta:hover {
+      transform: translateY(-3px);
+
+      box-shadow:
+        0 20px 58px rgba(255,255,255,.12),
+        inset 0 1px 0 rgba(255,255,255,1);
+    }
+
+
+    .cta-arrow {
+      width: 39px;
+      height: 39px;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 9px;
+
+      background: #080808;
+
+      color: white;
+
+      font-size: 17px;
+
+      transition: transform .25s ease;
+    }
+
+
+    .cta:hover .cta-arrow {
+      transform: translateX(2px);
+    }
+
+
+    .cta-note {
+      color: #5f5f67;
+
+      font-size: 11px;
+    }
+
+
+    /* ==========================================================
+       FEATURES
+       ========================================================== */
+
+    .features {
+      margin-top: 43px;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      gap: 9px;
+
+      flex-wrap: wrap;
+    }
+
+
+    .feature {
+      display: inline-flex;
+      align-items: center;
+
+      gap: 8px;
+
+      padding: 9px 12px;
+
+      border:
+        1px solid
+        rgba(255,255,255,.07);
+
+      border-radius: 8px;
+
+      background:
+        rgba(255,255,255,.016);
+
+      color: #6f6f77;
+
+      font-size: 9px;
+      font-weight: 600;
+
+      letter-spacing: .12em;
+
+      text-transform: uppercase;
+    }
+
+
+    .feature-dot {
+      width: 4px;
+      height: 4px;
+
+      border-radius: 50%;
+
+      background: #a1a1a8;
+    }
+
+
+    /* ==========================================================
+       FALLBACK RINGS
+       only displayed if WebGL cannot initialize
+       ========================================================== */
+
+    .fallback-rings {
+      position: absolute;
+
+      inset: 0;
+
+      display: none;
+
+      align-items: center;
+      justify-content: center;
+
+      z-index: 1;
+
+      pointer-events: none;
+    }
+
+
+    .fallback-rings span {
+      position: absolute;
+
+      border:
+        1px solid
+        rgba(220,220,225,.18);
+
+      border-radius: 50%;
+    }
+
+
+    .fallback-rings span:nth-child(1) {
+      width: 170px;
+      height: 170px;
+    }
+
+    .fallback-rings span:nth-child(2) {
+      width: 245px;
+      height: 245px;
+    }
+
+    .fallback-rings span:nth-child(3) {
+      width: 330px;
+      height: 330px;
+    }
+
+    .fallback-rings span:nth-child(4) {
+      width: 430px;
+      height: 430px;
+    }
+
+
+    /* ==========================================================
+       MOBILE
+       ========================================================== */
+
+    @media (max-width: 700px) {
+
+      nav {
+        width: calc(100% - 28px);
+        height: 72px;
+      }
+
+
+      .velos-brand {
+        height: 72px;
+      }
+
+
+      .velos-logo {
+        width: 170px;
+        height: 66px;
+      }
+
+
+      .nav-right .label {
+        display: none;
+      }
+
+
+      .hero {
+        min-height:
+          calc(100vh - 72px);
+
+        padding:
+          45px
+          0
+          70px;
+      }
+
+
+      .eyebrow {
+        font-size: 8px;
+
+        letter-spacing: .13em;
+      }
+
+
+      .magic-stage {
+        width: 108vw;
+        height: 330px;
+
+        margin-top: -2px;
+        margin-bottom: -25px;
+      }
+
+
+      .velos-word {
+        font-size:
+          clamp(78px, 25vw, 125px);
+      }
+
+
+      .center-caption {
+        font-size: 7px;
+
+        letter-spacing: .18em;
+      }
+
+
+      .hero-heading {
+        max-width: 95%;
+
+        font-size:
+          clamp(29px, 9vw, 42px);
+      }
+
+
+      .lead {
+        max-width: 94%;
+
+        font-size: 15px;
+
+        line-height: 1.55;
+      }
+
+
+      .cta {
+        width: min(290px, 90vw);
+      }
+
+
+      .features {
+        max-width: 340px;
+
+        margin-top: 35px;
+      }
+
+
+      .feature {
+        padding: 8px 9px;
+
+        font-size: 8px;
+      }
+
+    }
+
+
+    /* ==========================================================
+       ACCESSIBILITY
+       ========================================================== */
+
+    @media (
+      prefers-reduced-motion:
+      reduce
+    ) {
+
+      .status-dot {
+        animation: none;
+      }
+
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+  <div class="noise"></div>
+
+
+  <main class="page">
+
+
+    <!-- ======================================================
+         NAVIGATION
+         ====================================================== -->
+
+    <nav>
+
+      <a
+        class="velos-brand"
+        href="#"
+        aria-label="Velos"
+      >
+
+        <img
+          class="velos-logo"
+          src="./assets/velos-logo.svg"
+          alt="Velos"
+        />
+
+      </a>
+
+
+      <div class="nav-right">
+
+        <span class="status-dot"></span>
+
+        <span class="label">
+          AI gesture system ready
+        </span>
+
+      </div>
+
+    </nav>
+
+
+
+    <!-- ======================================================
+         HERO
+         ====================================================== -->
+
+    <section class="hero">
+
+      <div class="hero-inner">
+
+
+        <div class="eyebrow">
+
+          <span class="eyebrow-dot"></span>
+
+          AI-powered presentation control
+
+        </div>
+
+
+
+        <!-- ==================================================
+             MAGIC RINGS + VELOS
+             ================================================== -->
+
+        <div class="magic-stage">
+
+          <!-- Real MagicRings shader mounts here -->
+          <div id="magic-rings"></div>
+
+
+          <!-- fallback -->
+          <div
+            class="fallback-rings"
+            id="fallback-rings"
+          >
+
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+
+          </div>
+
+
+          <!-- VELOS EXACTLY IN CENTER -->
+
+          <div class="velos-center">
+
+            <h1 class="velos-word">
+              Velos
+            </h1>
+
+            <div class="center-caption">
+              Gesture Interface
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- ==================================================
+             CENTER ALIGNED COPY
+             ================================================== -->
+
+        <div class="hero-copy">
+
+          <h2 class="hero-heading">
+
+            Present with
+            <span class="soft">
+              nothing but your hands.
+            </span>
+
+          </h2>
+
+
+          <p class="lead">
+
+            Ditch the constant reach for your mouse,
+            keyboard, or remote. Velos uses your
+            computer's webcam to understand hand
+            movements in real time, giving you a
+            seamless and completely touchless
+            presentation experience.
+
+          </p>
+
+
+
+          <div class="cta-area">
+
+            <a
+              class="cta"
+              href="./app/index.html"
+            >
+
+              <span>
+                Presentation — Live
+              </span>
+
+              <span class="cta-arrow">
+                ↗
+              </span>
+
+            </a>
+
+            <a
+              class="cta"
+              href="./quorum/"
+              aria-label="Open Quorum Space"
+            >
+
+              <span>
+                Quorum Space — Live
+              </span>
+
+              <span class="cta-arrow" aria-hidden="true">
+                ↗
+              </span>
+
+            </a>
+
+
+            <p class="cta-note">
+
+              Enter the Velos presentation workspace or open a Quorum space.
+
+            </p>
+
+          </div>
+
+
+
+          <div class="features">
+
+            <div class="feature">
+              <span class="feature-dot"></span>
+              Gesture Navigation
+            </div>
+
+            <div class="feature">
+              <span class="feature-dot"></span>
+              Laser Pointer
+            </div>
+
+            <div class="feature">
+              <span class="feature-dot"></span>
+              Two-Hand Zoom
+            </div>
+
+            <div class="feature">
+              <span class="feature-dot"></span>
+              Air Mouse
+            </div>
+
+          </div>
+
+        </div>
+
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+
+  <!-- Existing Velos login -->
+  <script src="velos-face-login.js"></script>
+
+
+
+  <!-- ========================================================
+       ACTUAL MAGIC RINGS — THREE.JS / WEBGL
+       Adapted from the supplied MagicRings component
+       ======================================================== -->
+
+  <script type="module">
+
+    import * as THREE
+      from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+
+
+    const mount =
+      document.getElementById(
+        "magic-rings"
+      );
+
+
+    const fallback =
+      document.getElementById(
+        "fallback-rings"
+      );
+
+
+    /* ========================================================
+       SHADERS
+       ======================================================== */
+
+    const vertexShader = `
+
+      void main() {
+
+        gl_Position =
+          projectionMatrix *
+          modelViewMatrix *
+          vec4(position, 1.0);
+
+      }
+
+    `;
+
+
+
+    const fragmentShader = `
+
+      precision highp float;
+
+
+      uniform float uTime;
+
+      uniform float uAttenuation;
+
+      uniform float uLineThickness;
+
+      uniform float uBaseRadius;
+
+      uniform float uRadiusStep;
+
+      uniform float uScaleRate;
+
+      uniform float uOpacity;
+
+      uniform float uNoiseAmount;
+
+      uniform float uRotation;
+
+      uniform float uRingGap;
+
+      uniform float uFadeIn;
+
+      uniform float uFadeOut;
+
+      uniform float uMouseInfluence;
+
+      uniform float uHoverAmount;
+
+      uniform float uHoverScale;
+
+      uniform float uParallax;
+
+      uniform float uBurst;
+
+      uniform float uCoverageAlpha;
+
+
+      uniform vec2 uResolution;
+
+      uniform vec2 uMouse;
+
+
+      uniform vec3 uColor;
+
+      uniform vec3 uColorTwo;
+
+
+      uniform int uRingCount;
+
+
+
+      const float HP =
+        1.5707963;
+
+
+      const float CYCLE =
+        3.45;
+
+
+
+      float fade(float t) {
+
+        return
+          t < uFadeIn
+
+          ? smoothstep(
+              0.0,
+              uFadeIn,
+              t
+            )
+
+          : 1.0 -
+            smoothstep(
+              uFadeOut,
+              CYCLE - 0.2,
+              t
+            );
+
+      }
+
+
+
+      float ring(
+
+        vec2 p,
+
+        float ri,
+
+        float cut,
+
+        float t0,
+
+        float px
+
+      ) {
+
+        float t =
+          mod(
+            uTime + t0,
+            CYCLE
+          );
+
+
+        float r =
+          ri +
+          t /
+          CYCLE *
+          uScaleRate;
+
+
+        float d =
+          abs(
+            length(p) - r
+          );
+
+
+        float a =
+          atan(
+            abs(p.y),
+            abs(p.x)
+          ) / HP;
+
+
+        float th =
+          max(
+            1.0 - a,
+            0.5
+          ) *
+          px *
+          uLineThickness;
+
+
+        float h =
+
+          (
+            1.0 -
+            smoothstep(
+              th,
+              th * 1.5,
+              d
+            )
+          )
+
+          + 1.0;
+
+
+        d +=
+          pow(
+            cut * a,
+            3.0
+          ) * r;
+
+
+        return
+
+          h *
+
+          exp(
+            -uAttenuation * d
+          ) *
+
+          fade(t);
+
+      }
+
+
+
+      void main() {
+
+        float px =
+          1.0 /
+          min(
+            uResolution.x,
+            uResolution.y
+          );
+
+
+        vec2 p =
+
+          (
+            gl_FragCoord.xy -
+
+            0.5 *
+            uResolution.xy
+
+          ) * px;
+
+
+
+        float cr =
+          cos(uRotation);
+
+
+        float sr =
+          sin(uRotation);
+
+
+
+        p =
+          mat2(
+            cr,
+            -sr,
+            sr,
+            cr
+          ) * p;
+
+
+
+        p -=
+          uMouse *
+          uMouseInfluence;
+
+
+
+        float sc =
+
+          mix(
+            1.0,
+            uHoverScale,
+            uHoverAmount
+          )
+
+          +
+
+          uBurst *
+          0.3;
+
+
+
+        p /= sc;
+
+
+
+        vec3 c =
+          vec3(0.0);
+
+
+        float coverage =
+          0.0;
+
+
+
+        float rcf =
+
+          max(
+            float(uRingCount) - 1.0,
+            1.0
+          );
+
+
+
+        for (
+          int i = 0;
+          i < 10;
+          i++
+        ) {
+
+          if (
+            i >= uRingCount
+          ) {
+            break;
+          }
+
+
+
+          float fi =
+            float(i);
+
+
+
+          vec2 pr =
+
+            p -
+
+            fi *
+            uParallax *
+            uMouse;
+
+
+
+          vec3 rc =
+
+            mix(
+
+              uColor,
+
+              uColorTwo,
+
+              fi / rcf
+
+            );
+
+
+
+          float ringAmount =
+
+            ring(
+
+              pr,
+
+              uBaseRadius +
+
+              fi *
+              uRadiusStep,
+
+              pow(
+                uRingGap,
+                fi
+              ),
+
+              i == 0
+
+                ? 0.0
+
+                : 2.95 * fi,
+
+              px
+
+            );
+
+
+
+          c =
+            mix(
+              c,
+              rc,
+              vec3(
+                ringAmount
+              )
+            );
+
+
+
+          coverage =
+
+            max(
+              coverage,
+              ringAmount
+            );
+
+        }
+
+
+
+        c *=
+          1.0 +
+          uBurst *
+          2.0;
+
+
+
+        float n =
+
+          fract(
+
+            sin(
+
+              dot(
+
+                gl_FragCoord.xy +
+
+                uTime *
+                100.0,
+
+                vec2(
+                  12.9898,
+                  78.233
+                )
+
+              )
+
+            )
+
+            *
+
+            43758.5453
+
+          );
+
+
+
+        c +=
+
+          (
+            n - 0.5
+          )
+
+          *
+
+          uNoiseAmount;
+
+
+
+        float intensity =
+
+          max(
+
+            c.r,
+
+            max(
+              c.g,
+              c.b
+            )
+
+          );
+
+
+
+        vec3 emissiveColor =
+
+          intensity > 0.0001
+
+          ?
+
+          clamp(
+            c /
+            intensity,
+            0.0,
+            1.0
+          )
+
+          :
+
+          vec3(0.0);
+
+
+
+        vec3 outputColor =
+
+          mix(
+
+            emissiveColor,
+
+            clamp(
+              c,
+              0.0,
+              1.0
+            ),
+
+            uCoverageAlpha
+
+          );
+
+
+
+        float outputAlpha =
+
+          mix(
+
+            intensity,
+
+            coverage,
+
+            uCoverageAlpha
+
+          );
+
+
+
+        gl_FragColor =
+
+          vec4(
+
+            outputColor,
+
+            clamp(
+
+              outputAlpha *
+              uOpacity,
+
+              0.0,
+              1.0
+
+            )
+
+          );
+
+      }
+
+    `;
+
+
+
+    /* ========================================================
+       MAGIC RINGS SETTINGS
+
+       SILVER THEME
+       ======================================================== */
+
+    const settings = {
+
+      /* bright silver */
+      color:
+        "#f4f4f7",
+
+      /* darker silver */
+      colorTwo:
+        "#74747e",
+
+      speed:
+        0.72,
+
+      ringCount:
+        7,
+
+      attenuation:
+        10.8,
+
+      lineThickness:
+        1.65,
+
+      baseRadius:
+        0.20,
+
+      radiusStep:
+        0.075,
+
+      scaleRate:
+        0.13,
+
+      opacity:
+        0.82,
+
+      noiseAmount:
+        0.018,
+
+      rotation:
+        0,
+
+      ringGap:
+        1.13,
+
+      fadeIn:
+        0.72,
+
+      fadeOut:
+        0.52,
+
+      followMouse:
+        true,
+
+      mouseInfluence:
+        0.055,
+
+      hoverScale:
+        1.035,
+
+      parallax:
+        0.022,
+
+      clickBurst:
+        true,
+
+      alphaMode:
+        "luminance"
+
+    };
+
+
+
+    /* ========================================================
+       STATE
+       ======================================================== */
+
+    let renderer;
+
+    let scene;
+
+    let camera;
+
+    let material;
+
+    let frameId = 0;
+
+    let elapsed = 0;
+
+    let lastTime = 0;
+
+
+    let visible = true;
+
+
+    const mouse = {
+      x: 0,
+      y: 0
+    };
+
+
+    const smoothMouse = {
+      x: 0,
+      y: 0
+    };
+
+
+    let hoverAmount = 0;
+
+    let hovered = false;
+
+    let burst = 0;
+
+
+
+    /* ========================================================
+       INITIALIZE
+       ======================================================== */
+
+    function initMagicRings() {
+
+      try {
+
+        renderer =
+          new THREE.WebGLRenderer({
+            alpha: true,
+            antialias: true,
+            powerPreference:
+              "high-performance"
+          });
+
+
+        /*
+         * Original component requires WebGL2.
+         */
+
+        if (
+          !renderer.capabilities.isWebGL2
+        ) {
+
+          throw new Error(
+            "WebGL2 unavailable"
+          );
+
+        }
+
+
+      } catch (error) {
+
+        console.warn(
+          "MagicRings fallback:",
+          error
+        );
+
+
+        mount.style.display =
+          "none";
+
+
+        fallback.style.display =
+          "flex";
+
+
+        return;
+
+      }
+
+
+
+      renderer.setClearColor(
+        0x000000,
+        0
+      );
+
+
+      renderer.setPixelRatio(
+
+        Math.min(
+          window.devicePixelRatio,
+          2
+        )
+
+      );
+
+
+      mount.appendChild(
+        renderer.domElement
+      );
+
+
+
+      /* SCENE */
+
+      scene =
+        new THREE.Scene();
+
+
+
+      /* ORTHOGRAPHIC CAMERA */
+
+      camera =
+        new THREE.OrthographicCamera(
+
+          -0.5,
+          0.5,
+
+          0.5,
+          -0.5,
+
+          0.1,
+          10
+
+        );
+
+
+      camera.position.z =
+        1;
+
+
+
+      /* ======================================================
+         UNIFORMS
+         ====================================================== */
+
+      const uniforms = {
+
+        uTime: {
+          value: 0
+        },
+
+
+        uAttenuation: {
+          value:
+            settings.attenuation
+        },
+
+
+        uResolution: {
+          value:
+            new THREE.Vector2()
+        },
+
+
+        uColor: {
+          value:
+            new THREE.Color(
+              settings.color
+            )
+        },
+
+
+        uColorTwo: {
+          value:
+            new THREE.Color(
+              settings.colorTwo
+            )
+        },
+
+
+        uLineThickness: {
+          value:
+            settings.lineThickness
+        },
+
+
+        uBaseRadius: {
+          value:
+            settings.baseRadius
+        },
+
+
+        uRadiusStep: {
+          value:
+            settings.radiusStep
+        },
+
+
+        uScaleRate: {
+          value:
+            settings.scaleRate
+        },
+
+
+        uRingCount: {
+          value:
+            settings.ringCount
+        },
+
+
+        uOpacity: {
+          value:
+            settings.opacity
+        },
+
+
+        uNoiseAmount: {
+          value:
+            settings.noiseAmount
+        },
+
+
+        uRotation: {
+          value:
+
+            settings.rotation *
+
+            Math.PI /
+
+            180
+        },
+
+
+        uRingGap: {
+          value:
+            settings.ringGap
+        },
+
+
+        uFadeIn: {
+          value:
+            settings.fadeIn
+        },
+
+
+        uFadeOut: {
+          value:
+            settings.fadeOut
+        },
+
+
+        uMouse: {
+          value:
+            new THREE.Vector2()
+        },
+
+
+        uMouseInfluence: {
+          value:
+            settings.followMouse
+
+              ? settings.mouseInfluence
+
+              : 0
+        },
+
+
+        uHoverAmount: {
+          value: 0
+        },
+
+
+        uHoverScale: {
+          value:
+            settings.hoverScale
+        },
+
+
+        uParallax: {
+          value:
+            settings.parallax
+        },
+
+
+        uBurst: {
+          value: 0
+        },
+
+
+        uCoverageAlpha: {
+
+          value:
+
+            settings.alphaMode
+            === "coverage"
+
+              ? 1
+
+              : 0
+
+        }
+
+      };
+
+
+
+      /* MATERIAL */
+
+      material =
+        new THREE.ShaderMaterial({
+
+          vertexShader,
+
+          fragmentShader,
+
+          uniforms,
+
+          transparent: true,
+
+          depthTest: false,
+
+          depthWrite: false
+
+        });
+
+
+
+      /* FULL SCREEN QUAD */
+
+      const geometry =
+        new THREE.PlaneGeometry(
+          1,
+          1
+        );
+
+
+      const quad =
+        new THREE.Mesh(
+          geometry,
+          material
+        );
+
+
+      scene.add(
+        quad
+      );
+
+
+
+      /* ======================================================
+         RESIZE
+         ====================================================== */
+
+      function resize() {
+
+        const width =
+          mount.clientWidth;
+
+
+        const height =
+          mount.clientHeight;
+
+
+        if (
+          !width ||
+          !height
+        ) {
+          return;
+        }
+
+
+        renderer.setSize(
+          width,
+          height,
+          false
+        );
+
+
+        const dpr =
+
+          Math.min(
+            window.devicePixelRatio,
+            2
+          );
+
+
+        material
+          .uniforms
+          .uResolution
+          .value
+          .set(
+
+            width * dpr,
+
+            height * dpr
+
+          );
+
+      }
+
+
+      resize();
+
+
+      window.addEventListener(
+        "resize",
+        resize
+      );
+
+
+      const resizeObserver =
+        new ResizeObserver(
+          resize
+        );
+
+
+      resizeObserver.observe(
+        mount
+      );
+
+
+
+      /* ======================================================
+         POINTER INTERACTION
+         ====================================================== */
+
+      mount.addEventListener(
+
+        "pointermove",
+
+        event => {
+
+          const rect =
+            mount.getBoundingClientRect();
+
+
+          mouse.x =
+
+            (
+              event.clientX -
+              rect.left
+            )
+
+            /
+
+            rect.width
+
+            -
+
+            0.5;
+
+
+          mouse.y =
+
+            -(
+
+              (
+                event.clientY -
+                rect.top
+              )
+
+              /
+
+              rect.height
+
+              -
+
+              0.5
+
+            );
+
+        }
+
+      );
+
+
+
+      mount.addEventListener(
+
+        "pointerenter",
+
+        () => {
+
+          hovered = true;
+
+        }
+
+      );
+
+
+
+      mount.addEventListener(
+
+        "pointerleave",
+
+        () => {
+
+          hovered =
+            false;
+
+
+          mouse.x =
+            0;
+
+
+          mouse.y =
+            0;
+
+        }
+
+      );
+
+
+
+      mount.addEventListener(
+
+        "click",
+
+        () => {
+
+          if (
+            settings.clickBurst
+          ) {
+
+            burst =
+              1;
+
+          }
+
+        }
+
+      );
+
+
+
+      /* ======================================================
+         VISIBILITY OPTIMIZATION
+         ====================================================== */
+
+      const observer =
+        new IntersectionObserver(
+
+          entries => {
+
+            visible =
+              entries[0]
+              .isIntersecting;
+
+          },
+
+          {
+            threshold: 0
+          }
+
+        );
+
+
+      observer.observe(
+        mount
+      );
+
+
+
+      /* ======================================================
+         ANIMATION
+         ====================================================== */
+
+      function animate(time) {
+
+        frameId =
+          requestAnimationFrame(
+            animate
+          );
+
+
+        if (
+          !visible ||
+          document.hidden
+        ) {
+
+          lastTime =
+            time;
+
+          return;
+
+        }
+
+
+
+        const delta =
+
+          lastTime === 0
+
+          ? 0
+
+          : Math.min(
+              time - lastTime,
+              100
+            );
+
+
+        lastTime =
+          time;
+
+
+
+        elapsed +=
+
+          delta *
+
+          0.001 *
+
+          settings.speed;
+
+
+
+        /*
+         * Smooth pointer movement.
+         */
+
+        smoothMouse.x +=
+
+          (
+            mouse.x -
+            smoothMouse.x
+          )
+
+          *
+
+          0.07;
+
+
+
+        smoothMouse.y +=
+
+          (
+            mouse.y -
+            smoothMouse.y
+          )
+
+          *
+
+          0.07;
+
+
+
+        /*
+         * Smooth hover state.
+         */
+
+        hoverAmount +=
+
+          (
+            (
+              hovered
+              ? 1
+              : 0
+            )
+
+            -
+
+            hoverAmount
+          )
+
+          *
+
+          0.06;
+
+
+
+        /*
+         * Click burst decay.
+         */
+
+        burst *=
+          0.945;
+
+
+        if (
+          burst < 0.001
+        ) {
+
+          burst =
+            0;
+
+        }
+
+
+
+        /* UPDATE UNIFORMS */
+
+        const u =
+          material.uniforms;
+
+
+        u.uTime.value =
+          elapsed;
+
+
+        u.uMouse.value.set(
+
+          smoothMouse.x,
+
+          smoothMouse.y
+
+        );
+
+
+        u.uHoverAmount.value =
+          hoverAmount;
+
+
+        u.uBurst.value =
+          burst;
+
+
+
+        renderer.render(
+          scene,
+          camera
+        );
+
+      }
+
+
+
+      animate(0);
+
+    }
+
+
+
+    /* START */
+
+    initMagicRings();
+
+  </script>
+
+
+</body>
+</html>

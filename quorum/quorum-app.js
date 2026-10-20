@@ -1149,7 +1149,7 @@ function ensurePeer(peerId) {
     makingOffer: false, ignoreOffer: false, settingRemoteAnswer: false,
     polite: S.selfId.localeCompare(peerId) > 0,
     initialOfferer: S.selfId.localeCompare(peerId) < 0,
-    signalQueue: Promise.resolve(), trackQueue: Promise.resolve(), restartTimer: null,
+    signalQueue: Promise.resolve(), trackQueue: Promise.resolve(), restartTimer: null, recovery: null,
     mediaWaitExpired: false, mediaWaitTimer: null
   };
   S.peers.set(peerId, peer);
@@ -1220,10 +1220,10 @@ function ensurePeer(peerId) {
     }
     syncMediaConnectionUi();
     if (pc.connectionState === 'disconnected') {
-      peer.restartTimer = setTimeout(() => restartPeerIce(peer), 2000);
+      peer.restartTimer = setTimeout(() => { void recoverPeerIce(peer); }, 2000);
       return;
     }
-    if (pc.connectionState === 'failed') restartPeerIce(peer);
+    if (pc.connectionState === 'failed') void recoverPeerIce(peer);
   };
 
   peer.mediaWaitTimer = setTimeout(() => {
@@ -1258,11 +1258,39 @@ function syncLocalTracksToPeer(peer) {
   return peer.trackQueue;
 }
 
+function recoverPeerIce(peer) {
+  if (peer.recovery) return peer.recovery;
+  if (!S.joined || S.peers.get(peer.id) !== peer || peer.pc.connectionState === 'closed') return Promise.resolve();
+  const epoch = S.connectionEpoch;
+  const socket = S.socket;
+  // A long meeting or a change of network may need fresh TURN credentials.
+  // Collapse repeated failure events while the credential request is pending.
+  peer.recovery = (async () => {
+    await loadRtcConfig();
+    if (epoch !== S.connectionEpoch || socket !== S.socket || peer.pc.connectionState === 'connected') return;
+    restartPeerIce(peer);
+  })().finally(() => { peer.recovery = null; });
+  return peer.recovery;
+}
+
 function restartPeerIce(peer) {
   if (!S.joined || S.peers.get(peer.id) !== peer || peer.pc.connectionState === 'closed') return;
+  if (S.rtcConfig) {
+    try {
+      // Preserve negotiated policies, certificates and pool size. Replacing
+      // the full configuration can throw InvalidModificationError mid-call.
+      peer.pc.setConfiguration({
+        ...peer.pc.getConfiguration(),
+        iceServers: S.rtcConfig.iceServers
+      });
+    } catch (error) {
+      console.error('Quorum could not refresh media relay settings', error);
+    }
+  }
   // restartIce triggers negotiationneeded, which sends the new offer.
+  // Even if the refreshed settings were rejected, retry with the last usable
+  // configuration instead of abandoning recovery.
   try {
-    if (S.rtcConfig) peer.pc.setConfiguration(S.rtcConfig);
     peer.pc.restartIce();
   } catch (error) { console.error('Quorum media recovery failed', error); }
 }
@@ -1376,9 +1404,10 @@ function syncMediaConnectionUi() {
 
 async function retryMediaConnections() {
   const epoch = S.connectionEpoch;
+  // Playback must be attempted within the user's click, before the fetch.
+  enableRemoteAudio();
   await loadRtcConfig();
   if (!S.joined || epoch !== S.connectionEpoch) return;
-  enableRemoteAudio();
   for (const peer of S.peers.values()) {
     signal(peer.id, { renegotiate: true });
     if (peer.pc.localDescription?.type === 'offer' && peer.pc.signalingState === 'have-local-offer') {

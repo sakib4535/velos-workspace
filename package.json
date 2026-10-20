@@ -7,6 +7,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "build:core": "node scripts/build-core.js",
+    "build:site": "npm run build:core && node scripts/build-site.js",
     "build": "npm run build:core",
     "typecheck": "tsc -p tsconfig.json",
     "pretest": "npm run build:core",

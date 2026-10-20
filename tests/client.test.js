@@ -137,6 +137,7 @@ function createClient({
       this.candidates.push(candidate);
     }
     restartIce() { this.restarts += 1; }
+    getConfiguration() { return { ...this.config }; }
     setConfiguration(rtcConfig) { this.config = rtcConfig; }
     close() { this.connectionState = 'closed'; }
   }
@@ -191,7 +192,7 @@ function createClient({
     globalThis.client = {
       S, E, getWebSocketUrls, connectSocket, connectSocketAt, joinRoom,
       sendJoin, tryReconnect, onSocketMessage, onSocketClose, startHeartbeat,
-      ensurePeer, handleSignal, closePeer, restartPeerIce, renderStage, loadRtcConfig,
+      ensurePeer, handleSignal, closePeer, restartPeerIce, recoverPeerIce, renderStage, loadRtcConfig,
       bindBoxEvents, bindGroupEvents, bindControls, attachRemoteStream, enableRemoteAudio,
       syncMediaConnectionUi, retryMediaConnections, requestLeaveSpace
     };
@@ -939,7 +940,7 @@ test('a polite peer accepts a colliding offer, flushes queued ICE, and sends an 
   assert.equal(client.S.socket.sent[0].signal.description.type, 'answer');
 });
 
-test('ICE restarts wait out brief disconnects and stop for removed peers', () => {
+test('ICE restarts wait out brief disconnects and stop for removed peers', async () => {
   const client = createClient();
   setJoinedRoom(client, 'self', 'peer');
   const peer = client.ensurePeer('peer');
@@ -953,6 +954,7 @@ test('ICE restarts wait out brief disconnects and stop for removed peers', () =>
   assert.equal(peer.pc.restarts, 0);
   peer.pc.connectionState = 'failed';
   peer.pc.onconnectionstatechange();
+  await peer.recovery;
   assert.equal(peer.pc.restarts, 1);
   peer.pc.connectionState = 'disconnected';
   peer.pc.onconnectionstatechange();
@@ -962,6 +964,89 @@ test('ICE restarts wait out brief disconnects and stop for removed peers', () =>
   assert.equal(peer.pc.restarts, 1);
   assert.equal(peer.pc.connectionState, 'closed');
   assert.equal(client.S.peers.has('peer'), false);
+});
+
+test('refreshing TURN credentials preserves negotiated connection settings', () => {
+  const client = createClient();
+  setJoinedRoom(client, 'self', 'peer');
+  const peer = client.ensurePeer('peer');
+  const certificates = [{ fingerprint: 'existing-identity' }];
+  const existing = {
+    ...peer.pc.config, bundlePolicy: 'max-bundle', rtcpMuxPolicy: 'require',
+    iceCandidatePoolSize: 4, iceTransportPolicy: 'relay', certificates
+  };
+  peer.pc.config = existing;
+  peer.pc.localDescription = { type: 'answer', sdp: 'negotiated' };
+  peer.pc.setConfiguration = function (config) {
+    for (const key of ['bundlePolicy', 'rtcpMuxPolicy', 'iceCandidatePoolSize', 'certificates']) {
+      assert.equal(config[key], existing[key], `Changing ${key} must be rejected after negotiation`);
+    }
+    this.config = config;
+  };
+  const refreshed = [{ urls: 'turns:relay.example:443?transport=tcp', username: 'user', credential: 'renewed' }];
+  client.S.rtcConfig = { iceServers: refreshed, iceCandidatePoolSize: 0 };
+  client.restartPeerIce(peer);
+  assert.equal(peer.pc.config.iceServers, refreshed);
+  assert.equal(peer.pc.config.iceTransportPolicy, 'relay');
+  assert.equal(peer.pc.restarts, 1);
+  assert.equal(client.logs.length, 0);
+});
+
+test('a rejected credential update still attempts ICE recovery with the previous configuration', () => {
+  const client = createClient();
+  setJoinedRoom(client, 'self', 'peer');
+  const peer = client.ensurePeer('peer');
+  const original = peer.pc.config;
+  client.S.rtcConfig = { iceServers: [{ urls: 'turn:invalid.example' }] };
+  peer.pc.setConfiguration = () => { throw new Error('InvalidAccessError'); };
+  client.restartPeerIce(peer);
+  assert.equal(peer.pc.config, original);
+  assert.equal(peer.pc.restarts, 1);
+  assert.equal(client.logs.length, 1);
+});
+
+for (const exitBeforeResponse of [false, true]) {
+  test(`automatic recovery refreshes credentials once and ${exitBeforeResponse ? 'stops after leaving' : 'restarts the peer'}`, async () => {
+    let resolveFetch;
+    let fetches = 0;
+    const refreshed = [{ urls: 'turns:relay.example:443', username: 'user', credential: 'fresh' }];
+    const client = createClient({ fetch: () => {
+      fetches += 1;
+      return new Promise((resolve) => { resolveFetch = resolve; });
+    } });
+    setJoinedRoom(client, 'self', 'peer');
+    const peer = client.ensurePeer('peer');
+    peer.pc.connectionState = 'failed';
+    peer.pc.onconnectionstatechange();
+    const recovery = peer.recovery;
+    peer.pc.onconnectionstatechange();
+    assert.equal(peer.recovery, recovery);
+    assert.equal(fetches, 1);
+    assert.equal(peer.pc.restarts, 0);
+    if (exitBeforeResponse) {
+      client.S.joined = false;
+      client.S.connectionEpoch += 1;
+      client.closePeer('peer');
+    }
+    resolveFetch({ ok: true, json: async () => ({ iceServers: refreshed }) });
+    await recovery;
+    assert.equal(peer.pc.restarts, exitBeforeResponse ? 0 : 1);
+    if (!exitBeforeResponse) assert.equal(peer.pc.config.iceServers, refreshed);
+    assert.equal(peer.recovery, null);
+  });
+}
+
+test('retry starts remote audio synchronously before awaiting relay credentials', async () => {
+  let resolveFetch;
+  const client = createClient({ fetch: () => new Promise((resolve) => { resolveFetch = resolve; }) });
+  setJoinedRoom(client, 'self', 'peer');
+  const stage = preparePlaybackStage(client);
+  const audio = stage.media.get('peer').audio;
+  audio.srcObject = { getAudioTracks: () => [{ readyState: 'live' }] };
+  const retry = client.retryMediaConnections();
+  assert.equal(audio.plays, 1, 'Playback must retain the retry button user gesture');
+  resolveFetch({ ok: false });
+  await retry;
 });
 
 test('an ICE restart negotiates and sends a fresh offer through the active socket', async () => {

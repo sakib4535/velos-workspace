@@ -1,10 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
   "installCommand": "npm ci --include=dev",
-  "buildCommand": "npm run build",
-  "functions": {
-    "server.js": {
-      "includeFiles": "{index.html,velos-face-login.js,remote-input.js,rtc-config.js,lib/quorum-core.cjs,lib/decisions.cjs,THIRD_PARTY_NOTICES.md,assets/**,app/**,quorum/**}"
-    }
-  }
+  "buildCommand": "npm run build:site",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/favicon.ico", "destination": "/assets/velos-logo.svg" }
+  ]
 }
