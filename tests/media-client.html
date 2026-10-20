@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Quorum media test participant</title>
+  <script>
+    'use strict';
+    (() => {
+      const index = Number(new URLSearchParams(location.search).get('index'));
+      const markup = parent !== window && parent.quorumMediaHarness?.markup(index);
+      if (typeof markup !== 'string') throw new Error('Open tests/media-browser.html to run this fixture.');
+      document.open();
+      document.write(markup);
+      document.close();
+    })();
+  </script>
+</head>
+<body></body>
+</html>

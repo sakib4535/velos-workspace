@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#030405" />
+  <meta name="description" content="Velos Quorum — Spatial video rounds, host-formed groups, gesture voting and consent-based screen control." />
+  <title>Velos Quorum — Spatial Collaboration & Facilitation</title>
+  <link rel="stylesheet" href="./quorum.css?v=20261019-workspace-2" />
+  <link rel="stylesheet" href="./focus.css?v=20261019-workspace-2" />
+  <link rel="stylesheet" href="./decisions.css?v=20261020-2" />
+  <link rel="stylesheet" href="./canvas-space.css?v=20261019-workspace-2" />
+  <link rel="stylesheet" href="./workspace-tools.css?v=20261019-workspace-2" />
+</head>
+
+<body class="q-theme" data-mode="join">
+
+  <!-- ========================================================
+       JOIN SCREEN
+       ======================================================== -->
+  <section class="q-join" id="qJoin">
+    <div class="q-join-card">
+      <div class="q-brand">
+        <img class="q-mark" src="../assets/quorum-mark.svg" alt="" />
+
+        <div class="q-brand-copy">
+          <div class="q-brand-name">Velos Quorum</div>
+          <div class="q-brand-sub">Spatial Intelligence & Facilitation</div>
+        </div>
+      </div>
+
+      <h1 class="q-join-title">Sit with your people.</h1>
+      <p class="q-join-lead">
+        A shared canvas for your people, ideas, and tools. Move freely, make groups, and open working screens without leaving the room.
+      </p>
+
+      <div class="q-field">
+        <label for="qName">Your name</label>
+        <input id="qName" class="q-input" maxlength="42" placeholder="How should the round know you" autocomplete="nickname" />
+      </div>
+
+      <div class="q-field">
+        <label for="qRoom">Room code</label>
+        <input id="qRoom" class="q-input" maxlength="48" placeholder="cedar-k4" autocomplete="off" spellcheck="false" />
+      </div>
+
+      <details class="q-profile-details">
+        <summary>Optional profile for the host</summary>
+        <p>These self-reported details are visible only to the room host.</p>
+        <div class="q-profile-form-grid">
+          <label>Position / title<input id="qProfilePosition" class="q-input" maxlength="100" autocomplete="organization-title" placeholder="Product designer" /></label>
+          <label>Rank<input id="qProfileRank" class="q-input" maxlength="64" autocomplete="off" placeholder="Team lead" /></label>
+          <label>Skillsets<input id="qProfileSkills" class="q-input" maxlength="180" autocomplete="off" placeholder="Research, facilitation" /></label>
+          <label>Department<input id="qProfileDepartment" class="q-input" maxlength="100" autocomplete="organization" placeholder="Product" /></label>
+        </div>
+      </details>
+
+      <div class="q-join-actions">
+        <button class="q-btn primary" id="qOpenBtn" type="button">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Open a room
+        </button>
+        <button class="q-btn primary q-join-cta" id="qJoinBtn" type="button">
+          <span>Join with code</span>
+          <span class="q-join-arrow" aria-hidden="true">↗</span>
+        </button>
+      </div>
+
+      <div class="q-join-foot">
+        <span class="q-status" id="qJoinStatus"><span class="q-dot"></span>Checking server…</span>
+        <span class="q-hint">First through the door becomes the host.</span>
+      </div>
+    </div>
+
+    <a class="q-back" href="../index.html">← Back to Velos</a>
+  </section>
+
+  <!-- ========================================================
+       MEETING SPACE
+       ======================================================== -->
+  <div class="q-meet" id="qMeet" hidden>
+    <header class="q-top">
+      <div class="q-brand small">
+        <img class="q-mark" src="../assets/quorum-mark.svg" alt="" />
+        <span class="q-brand-name">Velos Quorum</span>
+      </div>
+
+      <button class="q-room-chip" id="qRoomChip" title="Copy invite link" type="button">
+        <span class="q-dot live" id="qConnDot"></span>
+        <span id="qRoomLabel">room</span>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+      </button>
+
+      <div class="q-top-meta">
+        <span class="q-pill" id="qPeopleCount">1 in space</span>
+        <span class="q-pill host" id="qHostLabel">Host —</span>
+        <span class="q-focus-compact" id="qFocusCompactMeter" role="meter" aria-label="Room focus energy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" title="Collective room focus energy">
+          <svg aria-hidden="true" viewBox="0 0 18 18" fill="none"><path d="m10.2 1.8-6 8.1h4.1l-.6 6.3 6.1-8.1H9.7l.5-6.3Z"/></svg>
+          <span>Energy</span><strong id="qFocusCompactValue">62</strong>
+        </span>
+      </div>
+
+      <div class="q-top-actions">
+        <button class="q-btn small q-sidebar-toggle" id="qSidebarToggle" type="button" aria-expanded="true" aria-controls="qFacil" aria-label="Hide sidebar" title="Hide sidebar">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16M18 9v6"/></svg>
+          <span>Room studio</span>
+        </button>
+        <button class="q-btn small" id="qEnableAudioBtn" type="button" hidden>Enable audio</button>
+        <button class="q-btn small" id="qInviteBtn" type="button" title="Copy a link that opens this room">Invite</button>
+        <a class="q-btn ghost small" href="../app/index.html" title="Velos presenter workspace">Velos Presenter</a>
+        <button class="q-btn danger small" id="qLeaveBtn" type="button">Leave</button>
+      </div>
+    </header>
+
+    <div class="q-body">
+      <section class="q-stage-wrap">
+        <div class="q-media-notice" id="qMediaNotice" role="status" hidden>
+          <span id="qMediaStatus"></span>
+          <button class="q-btn small" id="qRetryMediaBtn" type="button">Retry audio/video</button>
+        </div>
+        <div class="q-stage-toolbar">
+          <div class="q-stage-toolbar-copy">
+            <div class="q-stage-title">The Space <span class="q-canvas-label">OPEN CANVAS</span></div>
+            <div class="q-stage-meta" id="qStageMeta">Drag the canvas to explore · scroll to zoom</div>
+          </div>
+          
+          <div class="q-stage-toolbar-actions">
+            <!-- Presentation controls -->
+            <button class="q-btn small" id="qPresentBtn" type="button" title="Present slides or share screen on stage">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              <span>Present</span>
+            </button>
+            <button class="q-btn small" id="qToolsBtn" type="button" title="Open Quorum platform tools">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+              <span>Tools</span>
+            </button>
+
+            <span class="q-hint-host" id="qHostHint" hidden>Clench to grab · move hand · open to drop</span>
+            <button class="q-btn primary small" id="qNewGroupBtn" type="button" hidden>
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              New group
+            </button>
+          </div>
+        </div>
+
+        <div class="q-stage" id="qStage" aria-label="Quorum meeting space" tabindex="0" aria-describedby="qCanvasHint">
+          <div class="q-world" id="qWorld">
+            <svg id="qCanvasLinks" class="q-canvas-links" width="1600" height="1000" aria-hidden="true"></svg>
+            <div id="qToolScreens" class="q-tool-screens"></div>
+          </div>
+          <div class="q-canvas-help" id="qCanvasHint"><span class="q-canvas-orbit" aria-hidden="true"></span>Drag to explore <span>·</span> Scroll to zoom <span>·</span> Everyone can add a screen</div>
+          <div class="q-canvas-controls" aria-label="Canvas controls">
+            <button id="qCanvasPanBtn" type="button" title="Switch between moving objects and panning the canvas" aria-label="Pan canvas" aria-pressed="false"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 9V4a1.2 1.2 0 0 1 2.4 0v5-6a1.2 1.2 0 0 1 2.4 0v6-4a1.2 1.2 0 0 1 2.4 0v5-2a1.2 1.2 0 0 1 2.4 0v4c0 4-2 6-5 6H10c-2 0-3-1-4-3l-2-4c-.7-1.4.8-2.5 1.7-1.5L7 11"/></svg></button>
+            <span class="q-canvas-divider" aria-hidden="true"></span>
+            <button id="qCanvasZoomOut" type="button" aria-label="Zoom out" title="Zoom out (−)">−</button>
+            <output id="qCanvasZoomLabel" class="q-canvas-zoom-label" aria-label="Canvas zoom">100%</output>
+            <button id="qCanvasZoomIn" type="button" aria-label="Zoom in" title="Zoom in (+)">+</button>
+            <span class="q-canvas-divider" aria-hidden="true"></span>
+            <button id="qCanvasFit" type="button" aria-label="Fit everyone and tools" title="Fit all objects (F)"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 7V3h4m6 0h4v4M3 13v4h4m6 0h4v-4"/></svg></button>
+            <button id="qCanvasReset" type="button" aria-label="Reset canvas view" title="Reset view (0)"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 8a6 6 0 1 1 0 5M4 3v5h5"/></svg></button>
+          </div>
+          <!-- Shared Presentation & Canvas Stage (Activated when presenting) -->
+          <div class="q-shared-stage" id="qSharedStage" hidden>
+            <div class="q-present-bar">
+              <div class="q-present-status" id="qPresentationStatus">Presentation ready</div>
+              <div class="q-present-controls">
+                <button class="q-btn small" id="qShareScreenBtn" type="button" title="Share your primary display">Share screen</button>
+                <button class="q-btn small" id="qFitScreenBtn" type="button" title="Show the entire shared screen">Fit</button>
+                <button class="q-btn small" id="qFillScreenBtn" type="button" title="Fill the stage; screen edges may be cropped">Fill</button>
+                <button class="q-btn small" id="qFullscreenBtn" type="button" title="Expand the shared stage to full screen">Full screen</button>
+                <button class="q-btn small" id="qSlidePrevBtn" type="button" title="Previous slide">Previous</button>
+                <span class="q-slide-counter" id="qSlideCounter">1 / 4</span>
+                <button class="q-btn small" id="qSlideNextBtn" type="button" title="Next slide">Next</button>
+                <button class="q-btn ghost small" id="qClosePresentBtn" type="button" title="Stop presenting">Stop</button>
+              </div>
+            </div>
+            <div class="q-slide-viewport" id="qSlideViewport">
+              <div class="q-slides-wrapper" id="qSlidesWrapper"></div>
+              <video class="q-screen-video" id="qScreenVideo" autoplay playsinline muted hidden tabindex="0" aria-label="Shared display"></video>
+              <div class="q-remote-cursor" id="qRemoteCursor" hidden aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="q-stage-empty" id="qStageEmpty">
+            Waiting for people to arrive…
+          </div>
+
+          <div class="q-hand-cursor" id="qHandCursor" aria-hidden="true" hidden>
+            <span></span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="q-facil" id="qFacil" aria-label="Facilitation center">
+        <div class="q-facil-head">
+          <div>
+            <div class="q-facil-title">Room studio</div>
+            <div class="q-facil-sub" id="qFacilSub">Floor</div>
+          </div>
+          <button class="q-sidebar-close" id="qSidebarCloseBtn" type="button" aria-label="Hide sidebar" title="Hide sidebar">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m8 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <div class="q-facil-scroll">
+          <section class="q-card q-focus-card" id="qFocusEnergy" style="--focus-level: .62" aria-labelledby="qFocusTitle">
+            <div class="q-focus-card-head">
+              <span class="q-focus-eyebrow"><svg aria-hidden="true" viewBox="0 0 20 20" fill="none"><path d="M3 7.1 10 3l7 4.1v5.8L10 17l-7-4.1V7.1Z"/><path d="m3.4 7.3 6.6 4 6.6-4M10 11.3v5.2"/></svg>ROOM PULSE</span>
+              <span class="q-focus-live"><i aria-hidden="true"></i>Live</span>
+            </div>
+            <h2 class="q-focus-title" id="qFocusTitle">Focus energy</h2>
+            <div class="q-focus-reading">
+              <div class="q-focus-number"><strong id="qFocusValue">62</strong><span>/ 100</span></div>
+              <span class="q-focus-state" id="qFocusStateLabel">Building momentum</span>
+            </div>
+            <div class="q-focus-wave">
+              <svg viewBox="0 0 260 64" preserveAspectRatio="none" role="img" aria-label="Room focus energy over the last 80 seconds">
+                <defs>
+                  <linearGradient id="qFocusWaveGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#66dfbd" stop-opacity=".26"/><stop offset="100%" stop-color="#66dfbd" stop-opacity="0"/></linearGradient>
+                  <linearGradient id="qFocusLineGradient" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#82aaf6"/><stop offset="100%" stop-color="#80f0ce"/></linearGradient>
+                </defs>
+                <path class="q-focus-wave-grid" d="M0 16h260M0 32h260M0 48h260"/>
+                <path class="q-focus-wave-area" id="qFocusSparkArea" d="M0 26H260V64H0Z"/>
+                <path class="q-focus-wave-line" id="qFocusSparkLine" d="M0 26H260"/>
+              </svg>
+              <div class="q-focus-wave-labels"><span>Last 80 seconds</span><span>Now</span></div>
+            </div>
+            <div class="q-focus-meter" id="qFocusMeter" role="meter" aria-label="Room focus energy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62"><span></span></div>
+            <p class="q-focus-caption">A shared pulse, powered by everyone.</p>
+            <div class="q-focus-actions">
+              <button class="q-focus-charge" id="qFocusChargeBtn" type="button" title="Add 12 focus energy to the room">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m13.5 3-7 10h5l-1 8 7-10h-5l1-8Z"/></svg>
+                <span>Charge room</span><small>+12</small>
+              </button>
+              <button class="q-focus-action" id="qFocusParticipateBtn" type="button" title="Record a substantive contribution and add 6 focus energy"><svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5h12a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 16 13.5H9l-4 3v-3H4A1.5 1.5 0 0 1 2.5 12V5A1.5 1.5 0 0 1 4 3.5Z"/><path d="M6 7h8M6 10h5"/></svg><span>Add contribution</span></button>
+              <button class="q-focus-action" id="qFocusSignalBtn" type="button" title="Send agreement and add 3 focus energy"><svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 9 3-6c.5-1 2.5-.5 2.2 1.2L11 8h4.5a1.5 1.5 0 0 1 1.5 1.8l-1 5.4a1.5 1.5 0 0 1-1.5 1.3h-8V9ZM3 9h3.5v7.5H3V9Z"/></svg><span>Send signal</span></button>
+            </div>
+            <div class="q-focus-sync" id="qFocusSync">
+              <div class="q-focus-sync-copy"><span class="q-focus-sync-icon" aria-hidden="true">◎</span><div><strong>Group alignment</strong><span id="qFocusSyncLabel">Bring everyone into the same moment.</span></div></div>
+              <progress class="q-focus-sync-progress" id="qFocusSyncProgress" max="1" value="0" aria-label="Group alignment participation" hidden></progress>
+              <div class="q-focus-sync-actions">
+                <button class="q-btn small" id="qFocusSyncBtn" type="button" title="Give everyone 10 seconds to join a group alignment" hidden>Start alignment</button>
+                <button class="q-btn small q-focus-join-sync" id="qFocusSyncJoinBtn" type="button" hidden>Join alignment</button>
+              </div>
+            </div>
+            <div class="q-focus-host-actions">
+              <button id="qFocusCompleteBtn" type="button" title="Record a completed item and add 5 focus energy" hidden>✓ Item complete</button>
+              <button id="qFocusDriftBtn" type="button" title="Record an off-topic moment and subtract 6 focus energy" hidden>Mark drift</button>
+            </div>
+          </section>
+
+          <section class="q-card q-weekly-card" id="qFocusProfile" aria-labelledby="qWeeklyTitle">
+            <div class="q-weekly-head"><div><span class="q-focus-eyebrow">YOUR MOMENTUM</span><h2 id="qWeeklyTitle">A little, every week.</h2></div><span class="q-weekly-badge">This week</span></div>
+            <div class="q-weekly-rings">
+              <div class="q-weekly-ring" style="--ring-color: #79e7c4; --ring-progress: 0">
+                <div class="q-ring-dial"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="q-ring-track" cx="24" cy="24" r="19"/><circle class="q-ring-progress" id="qRingEngage" data-focus-ring="engage" cx="24" cy="24" r="19"/></svg><span id="qRingEngageValue">0/5</span></div><strong>Engage</strong><small>Sessions</small>
+              </div>
+              <div class="q-weekly-ring" style="--ring-color: #91b8ff; --ring-progress: 0">
+                <div class="q-ring-dial"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="q-ring-track" cx="24" cy="24" r="19"/><circle class="q-ring-progress" id="qRingContribute" data-focus-ring="contribute" cx="24" cy="24" r="19"/></svg><span id="qRingContributeValue">0/40</span></div><strong>Contribute</strong><small>Contributions</small>
+              </div>
+              <div class="q-weekly-ring" style="--ring-color: #cfabf6; --ring-progress: 0">
+                <div class="q-ring-dial"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="q-ring-track" cx="24" cy="24" r="19"/><circle class="q-ring-progress" id="qRingCollaborate" data-focus-ring="collaborate" cx="24" cy="24" r="19"/></svg><span id="qRingCollaborateValue">0/12</span></div><strong>Collaborate</strong><small>Signals & syncs</small>
+              </div>
+            </div>
+            <div class="q-focus-profile-stats"><div><strong id="qFocusSessions">0</strong><span>Sessions</span></div><div><strong id="qFocusStreak">0</strong><span>Day streak</span></div><div><strong id="qFocusBestScore">—</strong><span>Best score</span></div></div>
+            <button class="q-focus-end" id="qEndSessionBtn" type="button" hidden><svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="4" width="12" height="12" rx="3"/><path d="M7.5 10h5"/></svg>End for everyone</button>
+          </section>
+
+          <section class="q-card" id="qRemoteControlCard">
+  <div class="q-card-label">ShareView remote control</div>
+  <div class="q-card-note" id="qRemoteControlStatus">The host can share the primary display. Control stays off until the host approves one person.</div>
+  <div class="q-remote-control-actions">
+    <button class="q-btn small" id="qRemoteShareBtn" type="button" hidden>Share display</button>
+    <button class="q-btn small" id="qRemoteShareStopBtn" type="button" hidden>Stop sharing</button>
+    <button class="q-btn small" id="qRemoteControlRequestBtn" type="button" hidden>Request control</button>
+    <button class="q-btn primary small" id="qRemoteControlGrantBtn" type="button" hidden>Allow control</button>
+    <button class="q-btn ghost small" id="qRemoteControlDenyBtn" type="button" hidden>Decline</button>
+    <button class="q-btn ghost small" id="qRemoteControlRevokeBtn" type="button" hidden>Revoke</button>
+  </div>
+  <div class="q-card-note q-remote-control-hint">The browser asks before sharing. Control ends when sharing stops or the host revokes it.</div>
+</section>
+<section class="q-card" id="qGroupCard">
+            <div class="q-card-label">Your group</div>
+            <div class="q-group-line" id="qGroupLine">
+              <span class="q-group-swatch" id="qGroupSwatch"></span>
+              <span id="qGroupName">On the floor</span>
+            </div>
+            <div class="q-card-note" id="qGroupNote">The host will place you into a group by hand.</div>
+            <div class="q-member-row" id="qMemberRow"></div>
+          </section>
+
+          <section class="q-card" id="qMotionCard">
+            <div class="q-card-label">Motion on the floor</div>
+            <div class="q-motion-text" id="qMotionText">— no motion set —</div>
+            <div class="q-motion-edit" id="qMotionEdit" hidden>
+              <input class="q-input" id="qMotionInput" maxlength="240" placeholder="Should we ship the new release on Friday?" />
+              <button class="q-btn primary small" id="qMotionSave" type="button">Set</button>
+            </div>
+            <div class="q-ballot-state" id="qBallotState"></div>
+            <div class="q-countdown" id="qCountdown" hidden></div>
+            <div class="q-motion-actions" id="qMotionActions" hidden>
+              <select class="q-select" id="qVoteSeconds">
+                <option value="60">60s ballot</option>
+                <option value="120" selected>120s ballot</option>
+                <option value="180">180s ballot</option>
+                <option value="0">No timer</option>
+              </select>
+              <button class="q-btn primary small" id="qVoteOpenBtn" type="button">Open ballot</button>
+              <button class="q-btn ghost small" id="qResetHandsBtn" type="button">Reset hands</button>
+            </div>
+          </section>
+
+          <section class="q-card" id="qVoteCard">
+            <div class="q-card-label">Cast your vote</div>
+            <div class="q-vote-btns">
+              <button class="q-vote yes" data-vote="yes" type="button" title="Vote yes">👍<span>Yes</span></button>
+              <button class="q-vote no" data-vote="no" type="button" title="Vote no">👎<span>No</span></button>
+              <button class="q-vote abstain" data-vote="abstain" type="button" title="Abstain">✋<span>Abstain</span></button>
+            </div>
+            <div class="q-vote-mine" id="qVoteMine"></div>
+            <div class="q-card-note gestures" id="qGestureNote">
+              <strong>Hand gesture voting</strong>
+              <span>👍 yes · 👎 no · ✋ hold to raise · ✌️ withdraw</span>
+            </div>
+            <div class="q-gesture-live" id="qGestureLive" hidden>
+              <span class="q-gesture-chip" id="qGestureChip">✋ none</span>
+              <span class="q-gesture-action" id="qGestureAction"></span>
+            </div>
+          </section>
+
+          <section class="q-card" id="qTallyCard">
+            <div class="q-card-label">Live tally</div>
+            <div class="q-tally" id="qTally">
+              <div class="q-tally-empty">No ballot yet.</div>
+            </div>
+          </section>
+
+          <section class="q-card" id="qHandsCard">
+            <div class="q-card-label">Raised hands</div>
+            <div class="q-hands" id="qHands">—</div>
+          </section>
+        </div>
+      </aside>
+      <button class="q-sidebar-backdrop" id="qSidebarBackdrop" type="button" aria-label="Hide sidebar" tabindex="-1" hidden></button>
+      <button class="q-sidebar-handle" id="qSidebarHandle" type="button" aria-label="Hide sidebar" aria-expanded="true" aria-controls="qFacil" title="Slide the room panel in or out">
+        <svg aria-hidden="true" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m4 5 5 5-5 5"/></svg>
+      </button>
+    </div>
+
+    <!-- Dock Controls following Velos Precision Studio Conceptual Design -->
+    <footer class="q-dock" aria-label="Meeting controls">
+      <button class="q-dock-btn" id="qMicBtn" type="button" aria-pressed="true" title="Toggle microphone (M)">
+        <svg class="ic-on" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+        <svg class="ic-off" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 9v2a3 3 0 0 0 4.6 2.5M15 11V6a3 3 0 0 0-5.7-1.3M5 11a7 7 0 0 0 10.5 6M12 18v3M3 3l18 18"/></svg>
+        <span>Mic</span>
+      </button>
+
+      <button class="q-dock-btn" id="qCamBtn" type="button" aria-pressed="true" title="Toggle camera (V)">
+        <svg class="ic-on" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg>
+        <svg class="ic-off" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8Zm13 4 5-4v8l-5-4M3 3l18 18"/></svg>
+        <span>Camera</span>
+      </button>
+
+      <button class="q-dock-btn q-flip-camera" id="qFlipCamBtn" type="button" title="Switch between front and rear camera" aria-label="Switch between front and rear camera">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h12l-3-3M17 17H5l3 3"/><path d="M19 7v4M5 17v-4"/></svg>
+        <span>Flip</span>
+      </button>
+
+      <button class="q-dock-btn" id="qGestureBtn" type="button" aria-pressed="false" title="Toggle AI Hand Gestures">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12m0-6.5v-1a1.5 1.5 0 0 1 3 0V12m0-6v1.5a1.5 1.5 0 0 1 3 0V13m0-4.5a1.5 1.5 0 0 1 3 0V14a7 7 0 0 1-7 7h-.4a7 7 0 0 1-5.9-3.2L4.3 14a1.6 1.6 0 0 1 2.5-2L8 14"/></svg>
+        <span>Gestures</span>
+        <span class="q-dock-dot" id="qGestureDot"></span>
+      </button>
+
+      <!-- Presentation Dock Toggle -->
+      <button class="q-dock-btn" id="qPresentDockBtn" type="button" aria-pressed="false" title="Share slides or screen on stage (S)">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <span>Present</span>
+      </button>
+
+      <button class="q-dock-btn" id="qHandBtn" type="button" aria-pressed="false" title="Raise or lower hand (H)">
+        <span class="hand-emoji">✋</span>
+        <span>Raise</span>
+      </button>
+
+      <button class="q-dock-btn leave" id="qLeaveBtn2" type="button" title="Leave the space">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H9M13 12H3m3-3-3 3 3 3"/></svg>
+        <span>Leave</span>
+      </button>
+    </footer>
+  </div>
+
+  <dialog class="q-score-dialog" id="qScoreDialog" aria-labelledby="qScoreTitle" aria-describedby="qScoreDescription">
+    <div class="q-score-shell">
+      <header class="q-score-header"><span class="q-focus-eyebrow">QUORUM SESSION</span><button class="q-icon-btn" id="qScoreCloseBtn" type="button" aria-label="Close session summary">×</button></header>
+      <div class="q-score-emblem" aria-hidden="true"><svg viewBox="0 0 80 80" fill="none"><path d="m40 5 30 17v36L40 75 10 58V22L40 5Z"/><path d="m40 14 22 13v26L40 66 18 53V27l22-13Z"/><path d="m28 40 8 8 16-17"/></svg></div>
+      <h2 id="qScoreTitle">What we moved forward.</h2>
+      <p id="qScoreDescription">Shared outcomes and next steps from this session.</p>
+      <div id="qdSessionOutcomes" class="qd-outcome-summary"></div>
+      <button class="q-btn small" id="qdSummaryDownload" type="button">Download session notes</button>
+      <p class="q-score-saved" id="qScoreSaved"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 3 3 7-7"/></svg>Progress saved to this browser</p>
+      <button class="q-btn primary q-score-return" id="qScoreReturnBtn" type="button">Back to Quorum<svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12m-5-5 5 5-5 5"/></svg></button>
+    </div>
+  </dialog>
+
+  <dialog class="q-tools-dialog q-workspace-library" id="qToolsDialog" aria-labelledby="qToolsTitle">
+    <div class="q-tools-shell">
+      <header class="q-tools-head">
+        <div>
+          <span class="q-tool-kicker">YOUR ROOM, YOUR WORKSPACE</span>
+          <h2 id="qToolsTitle">Put your ideas on air.</h2>
+          <p>Add a working screen to the canvas. Everyone in the room can create, arrange, and use these shared tools.</p>
+        </div>
+        <button class="q-icon-btn" id="qToolsCloseBtn" type="button" aria-label="Close tools">×</button>
+      </header>
+      <div class="q-workspace-library-banner"><span class="q-workspace-broadcast" aria-hidden="true">◎</span><div><strong>A screen for every idea</strong><span>Drag it anywhere. Resize it. Work together inside the room.</span></div><span class="q-workspace-library-badge">LIVE TOGETHER</span></div>
+      <section class="q-tool-section" aria-labelledby="qNativeToolsTitle">
+        <h3 id="qNativeToolsTitle">Made for your workspace</h3>
+        <div class="q-tool-grid q-workspace-tool-grid" id="qToolsCards">
+          <button class="q-tool-card" type="button" data-workspace-kind="notes"><span class="q-tool-icon" aria-hidden="true">✎</span><span><strong>Shared notes</strong><small>Write ideas and decisions together</small></span><span class="q-tool-arrow" aria-hidden="true">+</span></button>
+          <button class="q-tool-card" type="button" data-workspace-kind="board"><span class="q-tool-icon" aria-hidden="true">⌁</span><span><strong>Whiteboard</strong><small>Sketch, draw, and connect ideas</small></span><span class="q-tool-arrow" aria-hidden="true">+</span></button>
+          <button class="q-tool-card" type="button" data-workspace-kind="tasks"><span class="q-tool-icon" aria-hidden="true">☑</span><span><strong>Team tasks</strong><small>Turn the discussion into action</small></span><span class="q-tool-arrow" aria-hidden="true">+</span></button>
+          <button class="q-tool-card" type="button" data-workspace-kind="timer"><span class="q-tool-icon" aria-hidden="true">◷</span><span><strong>Focus timer</strong><small>Keep a shared rhythm and deadline</small></span><span class="q-tool-arrow" aria-hidden="true">+</span></button>
+          <button class="q-tool-card" type="button" data-workspace-kind="embed"><span class="q-tool-icon" aria-hidden="true">▣</span><span><strong>Web tool</strong><small>Bring an embed-enabled app inside</small></span><span class="q-tool-arrow" aria-hidden="true">+</span></button>
+          <button class="q-tool-card" type="button" data-workspace-preset="https://www.openstreetmap.org/export/embed.html?bbox=-180%2C-60%2C180%2C80&amp;layer=mapnik" data-title="World map"><span class="q-tool-icon" aria-hidden="true">◎</span><span><strong>World map</strong><small>Explore an interactive map here</small></span><span class="q-tool-arrow" aria-hidden="true">+</span></button>
+        </div>
+      </section>
+      <section class="q-workspace-embed-section" aria-labelledby="qEmbedTitle">
+        <div class="q-workspace-embed-heading"><div><span class="q-tool-kicker">TUNE IN A WEB TOOL</span><h3 id="qEmbedTitle">Your tools, on your canvas.</h3></div><span class="q-workspace-library-badge">EMBED LINK</span></div>
+        <form id="qToolEmbedForm" class="q-workspace-embed-form">
+          <label for="qToolTitle">Screen name <span>optional</span><input id="qToolTitle" class="q-input" maxlength="80" placeholder="Design board, research, workshop…" /></label>
+          <label for="qToolUrl">Website or embed URL<input id="qToolUrl" class="q-input" type="url" inputmode="url" required placeholder="https://…" autocomplete="off" spellcheck="false" /></label>
+          <button class="q-btn primary" type="submit"><span aria-hidden="true">+</span> Add web screen</button>
+        </form>
+        <p class="q-workspace-embed-help">Use a published or embed link for documents, presentations, boards, and other web tools. The provider controls access and editing. Some websites block embedding; the built-in tools always stay inside Quorum.</p>
+      </section>
+      <p id="qToolCreateStatus" class="q-workspace-create-status" role="status" aria-live="polite">New screens appear in your current canvas view.</p>
+    </div>
+  </dialog>
+  <dialog class="q-profile-dialog" id="qProfileDialog" aria-labelledby="qProfileTitle">
+    <div class="q-profile-shell">
+      <header class="q-profile-head">
+        <div>
+          <span class="q-tool-kicker">HOST PROFILE VIEW</span>
+          <h2 id="qProfileTitle">Participant profile</h2>
+          <p id="qProfileRole">Room member</p>
+        </div>
+        <button class="q-icon-btn" id="qProfileCloseBtn" type="button" aria-label="Close participant profile">×</button>
+      </header>
+      <div class="q-profile-view-grid">
+        <div><span>Position / title</span><strong id="qProfileViewPosition">Not provided</strong></div>
+        <div><span>Rank</span><strong id="qProfileViewRank">Not provided</strong></div>
+        <div class="wide"><span>Skillsets</span><strong id="qProfileViewSkills">Not provided</strong></div>
+        <div class="wide"><span>Department</span><strong id="qProfileViewDepartment">Not provided</strong></div>
+        <div class="wide"><span>Stage position</span><strong id="qProfileViewStage">—</strong></div>
+        <div class="wide"><span>Assigned group</span><strong id="qProfileViewGroup">On the floor</strong></div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- local camera: WebRTC source + gesture detection source -->
+  <video id="qCamVideo" autoplay muted playsinline aria-hidden="true"></video>
+
+  <div class="q-toasts" id="qToasts" aria-live="polite"></div>
+
+  <script src="./quorum-config.js"></script>
+  <script src="./canvas-space.js?v=20261020-1"></script>
+  <script src="./quorum-app.js?v=20261020-1"></script>
+  <script type="module" src="./focus-ui.mjs?v=20261020-1"></script>
+  <script type="module" src="./workspace-tools.mjs?v=20261019-workspace-2"></script>
+  <script type="module" src="./decisions.mjs?v=20261020-2"></script>
+</body>
+</html>
+

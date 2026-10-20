@@ -1,0 +1,26 @@
+{
+  "name": "velos-quorum-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Velos presentation workspace with a gesture-first Quorum meeting space",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "build:core": "node scripts/build-core.js",
+    "build": "npm run build:core",
+    "typecheck": "tsc -p tsconfig.json",
+    "pretest": "npm run build:core",
+    "check": "node --check server.js && node --check lib/decisions.cjs && node --check quorum/decisions.mjs && node --check rtc-config.js && node --check remote-input.js && node --check velos-face-login.js && node --check app/app.js && node --check app/markup/app-markup.js && node --check app/markup/gesture-markup.js && node --check quorum/quorum-config.js && node --check quorum/canvas-space.js && node --check quorum/quorum-app.js && node --check quorum/workspace-tools.mjs && node --check quorum/focus-ui.mjs && node --check quorum/gesture-tracker.mjs && node --check quorum/gesture-worker.js && node --check scripts/build-core.js && node --check tests/media-browser.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18.11"
+  },
+  "dependencies": {
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
+}

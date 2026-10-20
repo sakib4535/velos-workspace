@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quorum real media regression tests</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #101519; color: #eef4f6; }
+    body { margin: 24px auto; max-width: 1280px; padding: 0 20px; }
+    h1 { font-size: 24px; }
+    p { max-width: 850px; line-height: 1.5; color: #c0ccd1; }
+    button { font: inherit; font-weight: 650; border: 0; border-radius: 6px; padding: 12px 20px; background: #82e8b1; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: wait; }
+    #status { margin-left: 16px; }
+    ol { padding-left: 24px; }
+    li { margin: 12px 0; line-height: 1.5; white-space: pre-wrap; }
+    .pass { color: #82e8b1; } .fail { color: #ff9e9e; }
+    #clients { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    iframe { width: 100%; height: 470px; border: 1px solid #3b4b54; border-radius: 6px; background: #030405; }
+    #sources { display: flex; gap: 8px; margin: 20px 0; }
+    canvas { width: 160px; height: 90px; border: 1px solid #3b4b54; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #182127; padding: 16px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Quorum real media regression tests</h1>
+  <p>Run from the project Node server on localhost. This loads the production Quorum client twice and joins actual signaling rooms. Only device input is synthetic: animated camera frames and a quiet audio tone. Passing requires increasing audio/video RTP bytes in both directions and decoded remote video, including after delayed permissions and a denied camera. No camera or microphone access is requested.</p>
+  <button id="run" type="button">Run tests</button><span id="status" role="status">Ready</span>
+  <ol id="results"></ol>
+  <div id="sources" aria-label="Synthetic cameras"></div>
+  <div id="clients" aria-label="Production clients"></div>
+  <details><summary>Diagnostic results</summary><pre id="diagnostics">No tests run yet.</pre></details>
+  <script src="./media-browser.js?v=20261019-network-diagnostics-2"></script>
+</body>
+</html>
