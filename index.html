@@ -214,6 +214,25 @@
       letter-spacing: .02em;
     }
 
+    .nav-quorum {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 16px;
+      border: 1px solid rgba(255,255,255,.24);
+      border-radius: 10px;
+      background: #e6e6eb;
+      color: #08090b;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .nav-quorum:hover { background: #fff; }
+    .nav-quorum:focus-visible { outline: 3px solid #98c8ff; outline-offset: 4px; }
+
 
     .status-dot {
       width: 7px;
@@ -399,6 +418,8 @@
       z-index: 1;
 
       pointer-events: auto;
+      visibility: hidden;
+      overflow: hidden;
     }
 
 
@@ -683,7 +704,7 @@
 
     /* ==========================================================
        FALLBACK RINGS
-       only displayed if WebGL cannot initialize
+       visible before scripts load and when graphics are unavailable
        ========================================================== */
 
     .fallback-rings {
@@ -691,7 +712,7 @@
 
       inset: 0;
 
-      display: none;
+      display: flex;
 
       align-items: center;
       justify-content: center;
@@ -710,6 +731,8 @@
         rgba(220,220,225,.18);
 
       border-radius: 50%;
+      max-width: 94%;
+      max-height: 94%;
     }
 
 
@@ -752,7 +775,7 @@
 
 
       .velos-logo {
-        width: 170px;
+        width: 130px;
         height: 66px;
       }
 
@@ -760,6 +783,9 @@
       .nav-right .label {
         display: none;
       }
+
+      .nav-right .status-dot { display: none; }
+      .nav-quorum { padding: 10px 12px; font-size: 12px; }
 
 
       .hero {
@@ -781,12 +807,17 @@
 
 
       .magic-stage {
-        width: 108vw;
-        height: 330px;
+        width: 100%;
+        height: 240px;
 
         margin-top: -2px;
         margin-bottom: -25px;
       }
+
+      .fallback-rings span:nth-child(1) { width: 110px; height: 110px; }
+      .fallback-rings span:nth-child(2) { width: 150px; height: 150px; }
+      .fallback-rings span:nth-child(3) { width: 185px; height: 185px; }
+      .fallback-rings span:nth-child(4) { width: 220px; height: 220px; }
 
 
       .velos-word {
@@ -893,8 +924,10 @@
         <span class="status-dot"></span>
 
         <span class="label">
-          AI gesture system ready
+          Presentation &amp; collaboration
         </span>
+
+        <a class="nav-quorum" href="./quorum/">Open Quorum <span aria-hidden="true">&nbsp;↗</span></a>
 
       </div>
 
@@ -1083,8 +1116,7 @@
 
   <script type="module">
 
-    import * as THREE
-      from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+    let THREE;
 
 
     const mount =
@@ -1701,6 +1733,24 @@
 
     let lastTime = 0;
 
+    let lastFrame = 0;
+    let stopped = false;
+    let cleanupGraphics = () => {};
+
+    function showFallback(error) {
+      if (stopped) return;
+      stopped = true;
+      cancelAnimationFrame(frameId);
+      mount.style.visibility = 'hidden';
+      fallback.style.display = 'flex';
+      cleanupGraphics();
+      if (renderer) {
+        renderer.domElement.remove();
+        renderer.dispose();
+      }
+      if (error) console.warn('Landing animation unavailable; using static artwork.', error);
+    }
+
 
     let visible = true;
 
@@ -1736,9 +1786,9 @@
         renderer =
           new THREE.WebGLRenderer({
             alpha: true,
-            antialias: true,
+            antialias: false,
             powerPreference:
-              "high-performance"
+              "low-power"
           });
 
 
@@ -1759,20 +1809,7 @@
 
       } catch (error) {
 
-        console.warn(
-          "MagicRings fallback:",
-          error
-        );
-
-
-        mount.style.display =
-          "none";
-
-
-        fallback.style.display =
-          "flex";
-
-
+        showFallback(error);
         return;
 
       }
@@ -1788,8 +1825,8 @@
       renderer.setPixelRatio(
 
         Math.min(
-          window.devicePixelRatio,
-          2
+          window.devicePixelRatio || 1,
+          1
         )
 
       );
@@ -1798,6 +1835,12 @@
       mount.appendChild(
         renderer.domElement
       );
+
+      renderer.domElement.addEventListener('webglcontextlost', event => {
+        event.preventDefault();
+        showFallback();
+      }, { once: true });
+      renderer.debug.onShaderError = () => showFallback();
 
 
 
@@ -2070,8 +2113,8 @@
         const dpr =
 
           Math.min(
-            window.devicePixelRatio,
-            2
+            window.devicePixelRatio || 1,
+            1
           );
 
 
@@ -2099,15 +2142,14 @@
       );
 
 
-      const resizeObserver =
-        new ResizeObserver(
-          resize
-        );
-
-
-      resizeObserver.observe(
-        mount
-      );
+      const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(resize) : null;
+      resizeObserver?.observe(mount);
+      cleanupGraphics = () => {
+        window.removeEventListener('resize', resize);
+        resizeObserver?.disconnect();
+        material.dispose();
+        geometry.dispose();
+      };
 
 
 
@@ -2228,7 +2270,7 @@
          VISIBILITY OPTIMIZATION
          ====================================================== */
 
-      const observer =
+      const observer = typeof IntersectionObserver === 'function' ?
         new IntersectionObserver(
 
           entries => {
@@ -2243,12 +2285,14 @@
             threshold: 0
           }
 
-        );
+        ) : null;
 
-
-      observer.observe(
-        mount
-      );
+      observer?.observe(mount);
+      const disposeGraphics = cleanupGraphics;
+      cleanupGraphics = () => {
+        observer?.disconnect();
+        disposeGraphics();
+      };
 
 
 
@@ -2257,6 +2301,8 @@
          ====================================================== */
 
       function animate(time) {
+
+        if (stopped) return;
 
         frameId =
           requestAnimationFrame(
@@ -2275,6 +2321,9 @@
           return;
 
         }
+
+        if (lastFrame && time - lastFrame < 1000 / 30) return;
+        lastFrame = time;
 
 
 
@@ -2406,10 +2455,15 @@
 
 
 
-        renderer.render(
-          scene,
-          camera
-        );
+        try {
+          renderer.render(scene, camera);
+          if (!stopped) {
+            mount.style.visibility = 'visible';
+            fallback.style.display = 'none';
+          }
+        } catch (error) {
+          showFallback(error);
+        }
 
       }
 
@@ -2423,7 +2477,23 @@
 
     /* START */
 
-    initMagicRings();
+    async function startMagicRings() {
+      // The page and its links work without a graphics context or a CDN request.
+      const simpleArtwork = window.matchMedia?.('(max-width: 700px), (pointer: coarse), (prefers-reduced-motion: reduce)');
+      if (simpleArtwork?.matches || navigator.connection?.saveData) return;
+      try {
+        THREE = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');
+        if (simpleArtwork?.matches) return;
+        simpleArtwork?.addEventListener?.('change', event => {
+          if (event.matches) showFallback();
+        });
+        initMagicRings();
+      } catch (error) {
+        showFallback(error);
+      }
+    }
+
+    startMagicRings();
 
   </script>
 
